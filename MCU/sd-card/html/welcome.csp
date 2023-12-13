@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<csp:render template="/sdcard/html/include/head.csp"/>
+</head>
+
+<body class="d-flex flex-column min-vh-100 container border border-dark-subtle" style="max-width: 500px">
+
+<header>
+    <div class="row" style="min-height: 50px">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark bd-navbar sticky-top" data-bs-theme="dark">
+            <div class="container-fluid">
+                <div class="col-auto">
+                </div>
+                <div class="col-auto text-center">
+                    <h1 class="navbar-brand">Device configuration</h1>
+                </div>
+                <div class="col-auto"></div>
+            </div>
+        </nav>
+    </div>
+	
+	<csp:render template="/sdcard/html/include/header-icons.csp"/>
+</header>
+
+<main>
+    <div class="row">
+        <div class="col mx-4 me-4">
+            <h1 class="fs-1 fw-bold">Welcome!</h1>
+            <p class="text-break my-4">
+				This page is a starting point to AI meter configuration,
+                after few steps your device will be ready.
+                Do not worry if something won't configure for the first time,
+                you always can go back and review your settings and change in a last <strong>summary</strong> page.
+                So lets start!
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col mx-4 me-4">
+            <form id="meterFormId" class="row g-2 needs-validation" novalidate>
+                <label for="meterCustomName" class="form-label fs-5 fw-light">Your meter name:</label>
+                <div class="input-group">
+                    <span class="input-group-text" id="inputGroupPrepend">AI-Meter-</span>
+                    <input id="meterCustomName"
+                           type="text"
+                           class="form-control"
+                           aria-describedby="inputGroupPrepend"
+                           oninput="checkMeterNameInput(this)"
+						   value="${meterName}"
+                           required>
+                    <div class="invalid-feedback">
+                        Name should be at least 3 symbols
+                    </div>
+                </div>
+                <button id="nameSubmitButtonId" type="submit" class="visually-hidden"></button>
+            </form>
+
+        </div>
+    </div>
+</main>
+
+<footer class="mt-auto">
+    <div class="row mb-5 my-3">
+        <div id="buttonContainerId" class="d-grid col-6 mx-auto">
+            <button id="startButton" type="button" class="btn btn-primary btn-lg" onclick="submitMeterName(this)">Lets start</button>
+        </div>
+    </div>
+</footer>
+
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="/assets/js/jquery-3.7.0.min.js"></script>
+<script src="/assets/js/jquery.validate.min.js"></script>
+<script src="/assets/js/popper.min.js"></script>
+<script src="/assets/js/bootstrap.bundle.js"></script>
+
+<script>
+    "use strict";
+	
+	function fnBlink() {
+        $("#headerWifiSvgId").fadeOut(1000);
+        $("#headerWifiSvgId").fadeIn(1000);
+    }
+    setInterval(fnBlink, 500);
+
+    (() => {
+        // Fetch all the forms we want to apply custom Bootstrap validation styles to
+        const forms = document.querySelectorAll('.needs-validation')
+
+        // Loop over them and prevent submission
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
+
+    function checkMeterNameInput(input) {
+        const METER_NAME_MIN_LENGTH = 3;
+        const METER_NAME_MAX_LENGTH = 62;
+        let errorMessage = "";
+
+        if (input.value.length < METER_NAME_MIN_LENGTH) {
+            errorMessage = "Meter name should be at least " + METER_NAME_MIN_LENGTH + " symbols";
+            input.setCustomValidity(errorMessage);
+            $(".invalid-feedback").text(errorMessage);
+
+        } else if (input.value.length > METER_NAME_MAX_LENGTH) {
+            errorMessage = "Meter name should not contain more than " + METER_NAME_MAX_LENGTH + " symbols";
+            input.setCustomValidity(errorMessage);
+            $(".invalid-feedback").text(errorMessage);
+
+        } else {
+            // input is fine -- reset the error message
+            input.setCustomValidity(errorMessage);
+        }
+    }
+
+    function submitMeterName(e) {
+        $("#nameSubmitButtonId").trigger("click");
+    }
+
+    $("#meterFormId").on("submit", function (e) {
+        e.preventDefault();
+		const loadingButton = '<button id="startButton" class="btn btn-primary btn-lg" type="button" disabled>' +
+						'<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>' +
+						'<span role="status">Loading...</span>' +
+					  '</button>';
+		$('#buttonContainerId').html(loadingButton);
+
+        if (e.target.checkValidity()) {
+            const meterName = $("#inputGroupPrepend").text() + $("#meterCustomName").val();
+            $.post("/save/meter/name", JSON.stringify({ name: meterName }), function (data) {
+				location.href = "/connect";
+				
+            });
+        }
+
+    });
+
+</script>
+
+</body>
+</html>

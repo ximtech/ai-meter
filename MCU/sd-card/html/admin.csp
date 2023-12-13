@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<csp:render template="/sdcard/html/include/head.csp"/>
+</head>
+
+<body class="d-flex flex-column min-vh-100 container border border-dark-subtle" style="max-width: 500px">
+
+<header>
+    <csp:render template="/sdcard/html/include/header-navbar.csp"/>
+</header>
+
+<main>
+
+    <nav>
+        <div class="nav nav-tabs my-3" id="nav-tab" role="tablist">
+            <button class="nav-link active"
+                    id="nav-home-tab"
+                    data-bs-toggle="tab"
+                    data-bs-target="#nav-home"
+                    type="button" role="tab"
+                    aria-controls="nav-home"
+                    aria-selected="true">Properties</button>
+
+            <button class="nav-link"
+                    id="nav-profile-tab"
+                    data-bs-toggle="tab"
+                    data-bs-target="#nav-profile"
+                    type="button"
+                    role="tab"
+                    aria-controls="nav-profile"
+                    aria-selected="false">Logs</button>
+        </div>
+    </nav>
+
+    <div class="tab-content" id="nav-tabContent">
+        <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+                <div class="accordion my-3" id="configPropertiesAccordionId">
+
+                    <csp:loop var="configPropFile" status="index" in="${configs}">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="${'config-prop-file-' + index}">
+                                <button class="accordion-button collapsed"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#${'config-content-' + index}"
+                                        aria-expanded="true"
+                                        aria-controls="${'config-content-' + index}">
+                                    <strong>${configPropFile}</strong>
+                                </button>
+                            </h2>
+                            <div id="${'config-content-' + index}" class="accordion-collapse collapse" aria-labelledby="${'config-prop-file-' + index}">
+                                <div class="accordion-body">
+								
+									<div class="input-group my-3">
+										<input type="text" placeholder="Key" aria-label="Key" class="form-control">
+										<input type="text" placeholder="Value" aria-label="Value" class="form-control">
+										<button type="button" class="btn btn-success bi-plus-lg" onclick="addNewProperty(this)"></button>
+									</div>
+								
+									<div class="table-responsive">
+										<table class="table table-bordered">
+											<thead>
+											<tr>
+												<th scope="col">Key</th>
+												<th scope="col">Value</th>
+											</tr>
+											</thead>
+											<tbody>
+											</tbody>
+										</table>
+									</div>
+									
+                                </div>
+                            </div>
+                        </div>
+                    </csp:loop>
+
+                </div>
+        </div>
+
+        <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
+            <div class="accordion my-3" id="logsAccordionId">
+
+                <csp:loop var="logFile" status="index" in="${logs}">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="${'log-file-' + index}">
+							<div class="row">
+								<div class="col">
+									<button class="accordion-button collapsed"
+											type="button"
+											data-bs-toggle="collapse"
+											data-bs-target="#${'log-file-element-' + index}"
+											aria-expanded="true"
+											aria-controls="${'log-file-element-' + index}">
+										<strong>${logFile}</strong>
+									</button>
+								</div>
+								<div class="col-auto my-2 mx-1">
+									<button type="button" class="btn btn-danger bi bi-x-lg" onclick="cleanLogFile(this)"></button>
+								</div>
+							</div>
+                        </h2>
+                        <div id="${'log-file-element-' + index}" class="accordion-collapse collapse" aria-labelledby="${'log-file-' + index}">
+                            <div class="accordion-body">
+                                    <pre></pre>
+                            </div>
+                        </div>
+                    </div>
+                </csp:loop>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Warning Modal -->
+    <div class="modal fade" id="warningModal" tabindex="-1" aria-labelledby="warningModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger" id="warningModalLabel">Warning</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure want to delete this entry?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="removeEntry()">Delete</button>
+                    <input id="keyInput" hidden/>
+                    <input id="propFileInput" hidden/>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+
+<footer class="mt-auto">
+    <div class="row mb-5">
+        <div class="d-grid col-6 mx-auto">
+            <button id="nextStepButtonId" type="button" class="btn btn-primary btn-lg" onclick="restartEsp()">ESP Restart</button>
+        </div>
+    </div>
+</footer>
+
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="/assets/js/jquery-3.7.0.min.js"></script>
+<script src="/assets/js/jquery.validate.min.js"></script>
+<script src="/assets/js/popper.min.js"></script>
+<script src="/assets/js/bootstrap.bundle.js"></script>
+
+
+<script>
+    $("#backSvgButton").on("click", function (event) {
+        event.preventDefault();
+        window.history.back();
+    });
+</script>
+
+<script>
+    "use strict";
+
+    let deleteRowForm;
+
+    function handlePropertyValue(form) {
+        const currentRow = $(form).closest("tr");
+        const valueTag = currentRow.find("td:eq(1)")
+        valueTag.removeAttr("onclick").html(
+            '<div class="input-group">' +
+            '   <input type="text" class="form-control" value=' + '\"' + valueTag.text() + '\"' + ' aria-label="">' +
+            '       <button type="button" class="btn btn-success bi bi-check-lg" onclick="updateValue(this)"></button>' +
+            '       <button type="button" class="btn btn-danger bi bi-x-lg" onclick="toggleModal(this)"></button>' +
+            '</div>'
+        );
+    }
+
+    function updateValue(form) {
+        const input = $(form).parent().parent().find("input");
+        const newValue = input.val();
+        if (newValue.length > 0) {
+            const currentRow = $(form).closest("tr");
+            const key = currentRow.find("td:eq(0)").text();
+			const value = currentRow.find("input").val();
+            const propFile = $(form).closest(".accordion-item").find(".accordion-button").text().trim();
+
+
+            $.post("/admin/update/property", JSON.stringify({ propertyFileName: propFile, key: key, value: value }), function (data) {
+                input.addClass("border border-success");
+
+            }).fail(function (data) {
+                input.addClass("border border-danger");
+                alert(data.responseText);
+            });
+            return;
+        }
+
+        input.addClass("border border-danger");
+    }
+
+    function toggleModal(form) {
+        deleteRowForm = $(form).closest("tr");
+        const key = deleteRowForm.find("td:eq(0)").text();
+        const propFile = $(form).closest(".accordion-item").find(".accordion-button").text().trim();
+
+        $("#keyInput").val(key);
+        $("#propFileInput").val(propFile);
+        $('#warningModal').modal('toggle');
+    }
+
+    function removeEntry() {
+        const key = $("#keyInput").val();
+        const propFile = $("#propFileInput").val();
+
+        $.post("/admin/remove/property", JSON.stringify({ propertyFileName: propFile, key: key }), function (data) {
+            $('#warningModal').modal('toggle');
+            deleteRowForm.remove();
+
+        }).fail(function (data) {
+            alert(data.responseText);
+        });
+    }
+	
+	function addNewProperty(form) {
+		const propFile = $(form).closest(".accordion-item").find(".accordion-button").text().trim();
+		const keyInput = $(form).parent().find("input[aria-label='Key']");
+        const valueInput = $(form).parent().find("input[aria-label='Value']");
+
+		if (propFile.length > 0 && keyInput.val().length > 0) {
+			const json = { propertyFileName: propFile, key: keyInput.val(), value: valueInput.val() };
+			$.post("/admin/update/property", JSON.stringify(json), function (data) {
+				keyInput.addClass("border-success").removeClass("border-danger");
+				valueInput.addClass("border-success").removeClass("border-danger");
+			});
+			return;
+	}
+
+        keyInput.addClass("border-danger").removeClass("border-success");
+        valueInput.addClass("border-danger").removeClass("border-success");
+    }
+
+    $('#configPropertiesAccordionId').on('show.bs.collapse', function (event) {
+        const configFileName = $(event.target).parent().find('button').text().trim();
+        const tableBody = $(event.target).find('tbody');
+
+        $.get("/admin/meter/config/values?configFileName=" + configFileName, function (data) {
+            let json = jQuery.parseJSON(data);
+			$(tableBody).empty();
+            $.each(json.pairs, function (i, mapObj) {
+                $(tableBody).append('<tr>' +
+                    '<td>' + mapObj.key + '</td>' +
+                    '<td onclick="handlePropertyValue(this);">' + (mapObj.value !== undefined ? mapObj.value : '') + '</td>' +
+                    '</tr>')
+            });
+
+        }).fail(function (data) {
+            alert(data.responseText);
+        });
+    });
+
+    $('#logsAccordionId').on('show.bs.collapse', function (event) {
+        const logFileName = $(event.target).parent().find('button').text().trim();
+        $.get("/admin/meter/logs?logFileName=" + logFileName, function (data) {
+            $(event.target).find('.accordion-body').find('pre').html(data);
+
+        }).fail(function (data) {
+            alert(data.responseText);
+        });
+    });
+	
+	function cleanLogFile(form) {
+        const logFile = $(form).parent().parent().find('.accordion-button');
+        $.post("/admin/remove/log", JSON.stringify({ logFileName: logFile.text().trim() }), function (data) {
+            location.reload();
+			
+        }).fail(function (data) {
+            alert(data.responseText);
+        });
+    }
+
+    function restartEsp() {
+        $.post("/admin/esp/restart", function (data) {
+            alert('Restarted');
+        });
+    }
+
+</script>
+</body>
+</html>

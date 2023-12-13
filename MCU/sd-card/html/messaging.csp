@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<csp:render template="/sdcard/html/include/head.csp"/>
+</head>
+
+<body class="d-flex flex-column min-vh-100 container border border-dark-subtle" style="max-width: 500px">
+
+<header>
+    <csp:render template="/sdcard/html/include/header-navbar.csp"/>
+	<csp:render template="/sdcard/html/include/header-icons.csp"/>
+</header>
+
+<main>
+    <div class="row">
+        <div class="col mx-4 me-4">
+            <h1 class="fs-1 fw-bold">Subscribe to Telegram Bot</h1>
+            <p class="text-break my-2">
+                The bot will send meter data by previously provided scheduler.
+                Subscribe to bot in few simple steps
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col mx-4 me-4">
+            <p class="text-break my-3">
+                1. Find bot in Telegram: <strong>@${botName}</strong>
+            </p>
+            <img src="assets/img/find_meter_bot.jpg"
+                 class="card-img-top mx-auto d-block my-3 border border-3 border-success-subtle"
+                 style="max-width: 300px; max-height: 100px"
+                 alt="Meter display">
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col mx-4 me-4">
+            <p class="text-break my-2">
+                2. Start chat by pressing button 'Start'
+            </p>
+            <img src="assets/img/start_chat_with_bot.jpg"
+                 class="card-img-top mx-auto d-block my-3 border border-3 border-success-subtle"
+                 style="max-width: 250px; max-height: 100px"
+                 alt="Meter display">
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col mx-4 me-4">
+            <p class="text-break my-2">
+                3. Write PIN code to bot chat and confirm subscription
+            </p>
+        </div>
+    </div>
+
+    <div class="row my-3">
+        <div class="col d-flex justify-content-center">
+            <h1 id="pinCodeId" class="fs-1 fw-bold">${messageId}</h1>
+        </div>
+    </div>
+	
+	<div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <div class="rounded me-2 d-flex justify-content-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-ban" viewBox="0 0 16 16">
+                        <path d="M15 8a6.973 6.973 0 0 0-1.71-4.584l-9.874 9.875A7 7 0 0 0 15 8ZM2.71 12.584l9.874-9.875a7 7 0 0 0-9.874 9.874ZM16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Z"/>
+                    </svg>
+                </div>
+                <strong id="toastHeaderId" class="me-auto"></strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body"></div>
+        </div>
+    </div>
+
+</main>
+
+<footer class="mt-auto">
+    <div class="row mb-5">
+        <div id="buttonContainerId" class="d-grid col-6 mx-auto">
+            <button id="subscribeButtonId" type="button" class="btn btn-primary btn-lg">Subscribe</button>
+        </div>
+    </div>
+</footer>
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="/assets/js/jquery-3.7.0.min.js"></script>
+<script src="/assets/js/jquery.validate.min.js"></script>
+<script src="/assets/js/popper.min.js"></script>
+<script src="/assets/js/bootstrap.bundle.js"></script>
+
+<script>
+    "use strict";
+	
+	$("#backSvgButton").on("click", function (event) {
+        event.preventDefault();
+        window.history.back();
+    });
+
+    function fnBlink() {
+        $("#headerWifiSvgId").fadeOut(1000);
+        $("#headerWifiSvgId").fadeIn(1000);
+    }
+    setInterval(fnBlink, 500);
+	
+	$("#subscribeButtonId").click(function () {
+		const loadingButton = '<button id="subscribeButtonId" class="btn btn-primary btn-lg" type="button" disabled>' +
+            '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>' +
+            '<span role="status">Loading...</span>' +
+            '</button>';
+        $('#buttonContainerId').html(loadingButton);
+	
+        const pinCode = $("#pinCodeId").text();
+        $.post("/save/chat/id", JSON.stringify({ message_id: pinCode }), function (data) {
+            location.href = "/summary";
+
+        }).fail(function (data) {
+            showMessageToast(data.responseText);
+			$('#buttonContainerId').html('<button id="subscribeButtonId" type="button" class="btn btn-primary btn-lg">Subscribe</button>');
+        });
+        
+    });
+	
+	function showMessageToast(message, header = 'Error') {
+        const errorToast = $('#errorToast');
+        const toastBootstrap = bootstrap.Toast.getOrCreateInstance(errorToast);
+        $('#toastHeaderId').text(header);
+        $('.toast-body').text(message);
+        toastBootstrap.show();
+    }
+
+
+</script>
+</body>
+</html>

@@ -1,11 +1,6 @@
-CMakeLists.txt.user
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Testing
-Makefile
-cmake_install.cmake
-install_manifest.txt
-compile_commands.json
-CTestTestfile.cmake
-_deps
+.idea
+/MCU/.idea/
+/MCU/.pio/
+/MCU/.vscode/
+/esp32-cam-shield/__Previews/
+/esp32-cam-shield/Project Outputs for esp32-cam-shield/

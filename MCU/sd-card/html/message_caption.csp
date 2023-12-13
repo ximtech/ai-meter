@@ -1,0 +1,9 @@
+Meter Name: <b>${meterName}</b>
+Readings: ${meterReadings}
+<csp:if test="${battery < 40}">
+    <b>WARNING LOW BATTERY</b>: ${battery + '%'}
+</csp:if>
+<csp:else>
+    Battery: ${battery + '%'}
+</csp:else>
+Date: ${date}

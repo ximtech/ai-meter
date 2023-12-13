@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<csp:render template="/sdcard/html/include/head.csp"/>
+</head>
+
+<body class="d-flex flex-column min-vh-100 container border border-dark-subtle" style="max-width: 500px">
+
+<header>
+    <csp:render template="/sdcard/html/include/header-navbar.csp"/>
+	<csp:render template="/sdcard/html/include/header-icons.csp"/>
+</header>
+
+<csp:set var="weekDayList" value="['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']"/>
+<csp:set var="monthList" value="['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']"/>
+<csp:set var="daysOfMonthList" value="[1...31]"/>
+
+<main>
+    <div class="row">
+        <div class="col mx-4 me-4">
+            <h1 class="fs-1 fw-bold">Scheduling</h1>
+            <p class="fs-5 fw-light">Choose one of the available time plan</p>
+        </div>
+
+        <div id="accordionSchedule" class="accordion accordion-flush my-2">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne">
+                        <span class="fs-5 fw-light">Daily</span>
+                    </button>
+                </h2>
+                <div id="flush-collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionSchedule">
+                    <div class="accordion-body">
+                        <div class="row ">
+                            <div class="d-grid col">
+                                <div class="input-group d-flex mb-3 d-flex justify-content-center">
+                                    <label for="timePickerId1" class="form-label fs-5 fw-light mx-3">Run at:</label>
+                                    <input id="timePickerId1" class="time form-control" type="text" style="max-width: 150px"/>
+                                    <span class="input-group-text" id="basic-addon1"><i class="bi bi-clock"></i></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row d-flex justify-content-center">
+                            <div class="d-grid col-6 mx-auto">
+                                <button id="dailyNextButtonId" type="button" class="btn btn-primary">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo">
+                        <span class="fs-5 fw-light">Weekly</span>
+                    </button>
+                </h2>
+                <div id="flush-collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionSchedule">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col">
+                                <p class="fs-5 fw-light my-3">Week days:</p>
+                            </div>
+                        </div>
+
+                            <div class="row d-flex justify-content-center" style="margin: 0">
+								<csp:loop status="index" var="weekDay" in="${weekDayList}">
+									<div class="d-inline my-2 mx-1 d-flex justify-content-center" style="max-width: 35px">
+                                    <input id="${'btn-check-' + index}" type="checkbox" class="btn-check" autocomplete="off" value="${weekDay}">
+                                    <label class="btn btn-outline-secondary fw-light d-flex justify-content-center"
+                                           style="max-width: 35px; max-height: 35px; font-size: 12px" 
+										   for="${'btn-check-' + index}">${weekDay}</label>
+									</div>
+								</csp:loop>
+                            </div>
+
+                        <div class="row my-3">
+                            <div class="d-grid col">
+                                <div class="input-group d-flex mb-3 d-flex justify-content-center">
+                                    <label for="timePickerId2" class="form-label fs-5 fw-light mx-3">Run at:</label>
+                                    <input id="timePickerId2" class="time form-control" type="text" style="max-width: 150px"/>
+                                    <span class="input-group-text" id="basic-addon2"><i class="bi bi-clock"></i></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row d-flex justify-content-center my-3">
+                            <div class="d-grid col-6 mx-auto">
+                                <button id="weeklyNextButtonId" type="button" class="btn btn-primary">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseThree" aria-expanded="false" aria-controls="flush-collapseThree">
+                        <span class="fs-5 fw-light">Monthly</span>
+                    </button>
+                </h2>
+                <div id="flush-collapseThree" class="accordion-collapse collapse" data-bs-parent="#accordionSchedule">
+                    <div class="container">
+                            <div id="accordionScheduleInner" class="accordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                            <span class="fs-5 fw-light">Month</span>
+                                        </button>
+                                    </h2>
+                                    <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionScheduleInner">
+                                        <div class="accordion-body">
+                                            <ul class="list-group">
+                                                <li class="list-group-item border border-primary-subtle">
+                                                    <input class="form-check-input me-1" type="checkbox" value="monthCheckBox" id="allMonthCheckbox">
+                                                    <label class="form-check-label" for="allMonthCheckbox">Every month</label>
+                                                </li>
+												
+												<csp:loop status="index" var="month" in="${monthList}">
+												<li class="list-group-item">
+													<input id="${'monthCheckBox-' + index}" class="form-check-input me-1" type="checkbox" value="monthCheckBox" name="${index + 1}">
+													<label class="form-check-label" for="${'monthCheckBox-' + index}">${month}</label>
+												</li>
+												</csp:loop>
+												
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                            <span class="fs-5 fw-light">Day of month</span>
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionScheduleInner">
+                                        <div class="accordion-body">
+                                            <ul class="list-group">
+                                                <li class="list-group-item border border-primary-subtle">
+                                                    <input id="lastDayOfMonthCheckbox" class="form-check-input me-1" type="checkbox" value="">
+                                                    <label class="form-check-label" for="lastDayOfMonthCheckbox">Last day of month</label>
+                                                </li>
+
+                                                <li class="list-group-item border">
+                                                    <div id="dayOfMonthItemsId" class="row d-flex justify-content-start align-items-start">
+													
+														<csp:loop status="index" var="day" in="${daysOfMonthList}">
+														<div class="col-4 d-flex justify-content-start">
+                                                            <input id="${'dayOfMonthCheckbox-' + index}" class="form-check-input me-1" type="checkbox" value="${day}">
+                                                            <label class="form-check-label" for="${'dayOfMonthCheckbox-' + index}">${day}</label>
+                                                        </div>
+														</csp:loop>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row my-2">
+                            <div class="d-grid col">
+                                <div class="input-group d-flex mb-3 d-flex justify-content-center">
+                                    <label for="timePickerId3" class="form-label fs-5 fw-light mx-3">Run at:</label>
+                                    <input id="timePickerId3" class="time form-control" type="text" style="max-width: 150px"/>
+                                    <span class="input-group-text" id="basic-addon3"><i class="bi bi-clock"></i></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row d-flex justify-content-center">
+                            <div class="d-grid col-5 mx-auto">
+                                <button id="monthlyNextButtonId" type="button" class="btn btn-primary">Next</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+		
+	<div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <div class="rounded me-2 d-flex justify-content-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-ban" viewBox="0 0 16 16">
+                        <path d="M15 8a6.973 6.973 0 0 0-1.71-4.584l-9.874 9.875A7 7 0 0 0 15 8ZM2.71 12.584l9.874-9.875a7 7 0 0 0-9.874 9.874ZM16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Z"/>
+                    </svg>
+                </div>
+                <strong id="toastHeaderId" class="me-auto"></strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body"></div>
+        </div>
+    </div>
+
+</main>
+
+<footer>
+</footer>
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="/assets/js/jquery-3.7.0.min.js"></script>
+<script src="/assets/js/jquery.validate.min.js"></script>
+<script src="/assets/js/popper.min.js"></script>
+<script src="/assets/js/bootstrap.bundle.js"></script>
+<script src="/assets/js/jquery-clock-timepicker.min.js"></script>
+
+<script>
+    "use strict";
+	
+	const MONTH_COUNT = 12;
+	
+	$("#backSvgButton").on("click", function (event) {
+        event.preventDefault();
+        window.history.back();
+    });
+
+    function fnBlink() {
+        $("#headerWifiSvgId").fadeOut(1000);
+        $("#headerWifiSvgId").fadeIn(1000);
+    }
+    setInterval(fnBlink, 500);
+
+    $(".time").clockTimePicker({
+        modeSwitchSpeed: 2000,
+        colors: {
+            popupHeaderBackgroundColor: "#034efc",
+            selectorColor: "#034efc",
+            buttonTextColor: "#034efc"
+        }
+    });
+
+    const date = new Date();
+    $('.time').clockTimePicker('value', date.getHours() + ":" + date.getMinutes());
+
+    $('#allMonthCheckbox').click(function () {
+        $("input[value='monthCheckBox']").not(this).prop('checked', this.checked);
+    });
+
+	// Daily
+    $("#dailyNextButtonId").click(function () {
+        const runAtTime = timePickerValueToDate($('#timePickerId1').val());
+        const cron = formatCron({
+            minutes: runAtTime.getMinutes(),
+            hours: runAtTime.getHours()
+        });
+        
+		console.log('Daily: ' + cron);
+		$('#dailyNextButtonId').prop('disabled', true);
+        postCroneExpression(cron);
+        $('#dailyNextButtonId').prop('disabled', false);
+    });
+
+    // Weekly handler
+    $("#weeklyNextButtonId").click(function () {
+        let selectedWeekCheckboxes = [];
+        $('#flush-collapseTwo input:checked').each(function() {
+            selectedWeekCheckboxes.push($(this).attr('value'));
+        });
+
+        if (!selectedWeekCheckboxes.length) {
+            showMessageToast('Please, choose a weekday');
+            return;
+        }
+
+        const selectedWeekdays = selectedWeekCheckboxes.length === 7 ? '*' : selectedWeekCheckboxes;
+        const runAtTime = timePickerValueToDate($('#timePickerId2').val());
+        const cron = formatCron({
+            minutes: runAtTime.getMinutes(),
+            hours: runAtTime.getHours(),
+            weekday: selectedWeekdays});
+        
+		console.log('Weekly: ' + cron);
+		$('#weeklyNextButtonId').prop('disabled', true);
+        postCroneExpression(cron);
+        $('#weeklyNextButtonId').prop('disabled', false);
+    });
+
+     // Monthly handler
+    $("#monthlyNextButtonId").click(function () {
+        let selectedMonthCheckboxes = [];
+        $('#collapseOne input[id^=monthCheckBox]').each(function () {
+            if ($(this).is(':checked')) {
+                selectedMonthCheckboxes.push($(this).attr('name'));
+            }
+        });
+
+        if (!selectedMonthCheckboxes.length) {
+            showMessageToast('Please, choose a month');
+            return;
+        }
+        const selectedMonths = selectedMonthCheckboxes.length === MONTH_COUNT ? "*" : selectedMonthCheckboxes;
+
+
+        const selectedDaysCheckboxes = [];
+        $('#dayOfMonthItemsId input:checked').each(function () {
+            selectedDaysCheckboxes.push($(this).attr('value'));
+        });
+
+        const isLastDayOfMonthChecked = $('#lastDayOfMonthCheckbox').is(":checked")
+        if (!selectedDaysCheckboxes.length && !isLastDayOfMonthChecked) {
+            showMessageToast('Please, choose a day of month');
+            return;
+        }
+
+        let selectedDays = [].concat(selectedDaysCheckboxes);
+        if (isLastDayOfMonthChecked) {
+            selectedDays.push('L');
+        }
+
+        const runAtTime = timePickerValueToDate($('#timePickerId3').val());
+        const cron = formatCron({
+            minutes: runAtTime.getMinutes(),
+            hours: runAtTime.getHours(),
+            month: selectedMonths,
+            day: selectedDays});
+
+        console.log('Monthly: ' + cron);
+		$('#monthlyNextButtonId').prop('disabled', true);
+        postCroneExpression(cron);
+        $('#monthlyNextButtonId').prop('disabled', false);
+    });
+
+    function timePickerValueToDate(value) {
+        let parts = value.split(":");
+        let dateObj = new Date();
+        dateObj.setHours(parts[0], parts[1]);
+        return dateObj;
+    }
+
+    function showMessageToast(message, header = 'Error') {
+        const errorToast = $('#errorToast');
+        const toastBootstrap = bootstrap.Toast.getOrCreateInstance(errorToast);
+        $('#toastHeaderId').text(header);
+        $('.toast-body').text(message);
+        toastBootstrap.show();
+    }
+
+    function formatCron(cronParts) {
+        return '0' +
+        ` ${cronParts.minutes}` +
+        ` ${cronParts.hours}` +
+        ` ${cronParts.day !== undefined ? cronParts.day : '*'}` +
+        ` ${cronParts.month !== undefined ? cronParts.month : '*'}` +
+        ` ${cronParts.weekday !== undefined ? cronParts.weekday : '*'}`;
+    }
+	
+	function postCroneExpression(cron) {
+        $.post("/save/cron", JSON.stringify({ cron: cron }), function (data) {
+            location.href = "/messaging";
+
+        }).fail(function (data) {
+            showMessageToast(data.responseText);
+        });
+    }
+
+</script>
+</body>
+</html>

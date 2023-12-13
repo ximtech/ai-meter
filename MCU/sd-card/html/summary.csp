@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<csp:render template="/sdcard/html/include/head.csp"/>
+</head>
+
+<body class="d-flex flex-column min-vh-100 container border border-dark-subtle" style="max-width: 500px">
+
+<header>
+    <csp:render template="/sdcard/html/include/header-navbar.csp"/>
+    <csp:render template="/sdcard/html/include/header-icons.csp"/>
+</header>
+
+<main class="container">
+
+    <div class="row">
+        <div class="col">
+            <h1 class="fs-1 fw-bold">Congratulations!</h1>
+            <p class="fs-6 fw-light my-3">
+                You have completed all the configuration. Items can be changed by pressing on it.
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-auto" style="min-width: 85%">
+            <p class="text-break my-1" onclick="toggleMeterNameCanvas(this)">
+                1. <a href="#" class="link-dark link-offset-2 link-underline-opacity-0 link-underline-opacity-100-hover">Name: <strong>${fullMeterName}</strong></a>
+            </p>
+        </div>
+		
+		<div class="col-1 d-flex justify-content-center">
+        <csp:if test="${fullMeterName != null && fullMeterName != ''}">
+            <img src="/assets/img/check-circle.jpg" style="width: 22px; height: 22px" alt="check-circle">
+		</csp:if>
+		<csp:else>
+            <img src="/assets/img/x-circle.jpg" style="width: 22px; height: 22px" alt="x-circle">
+		</csp:else>
+		</div>
+    </div>
+
+    <div class="row">
+        <div class="col-auto" style="min-width: 85%">
+            <p class="text-break my-1" onclick="redirectToPage('/connect')">
+                2. <a href="#" class="link-dark link-offset-2 link-underline-opacity-0 link-underline-opacity-100-hover">Connected to Wi-Fi: <strong>${wifiApName}</strong></a>
+            </p>
+        </div>
+		
+		<div class="col-1 d-flex justify-content-center">
+        <csp:if test="${wifiHaveConnection == true}">
+            <img src="/assets/img/check-circle.jpg" style="width: 22px; height: 22px" alt="check-circle">
+		</csp:if>
+		<csp:else>
+            <img src="/assets/img/x-circle.jpg" style="width: 22px; height: 22px" alt="x-circle">
+		</csp:else>
+		</div>
+    </div>
+
+    <div class="row">
+        <div class="col-auto" style="min-width: 85%">
+            <p class="text-break my-1" onclick="toggleTimeZoneCanvas(this)">
+                3. <a href="#" class="link-dark link-offset-2 link-underline-opacity-0 link-underline-opacity-100-hover">Timezone: <strong>${timeZoneName}</strong></a>
+            </p>
+        </div>
+		
+		<div class="col-1 d-flex justify-content-center">
+        <csp:if test="${isTimeZoneSet == true}">
+            <img src="/assets/img/check-circle.jpg" style="width: 22px; height: 22px" alt="check-circle">
+		</csp:if>
+		<csp:else>
+            <img src="/assets/img/x-circle.jpg" style="width: 22px; height: 22px" alt="x-circle">
+		</csp:else>
+		</div>
+    </div>
+
+    <div class="row">
+        <div class="col-auto" style="min-width: 85%">
+            <p class="text-break my-1" onclick="redirectToPage('/calibrate')">
+                4. <a href="#" class="link-dark link-offset-2 link-underline-opacity-0 link-underline-opacity-100-hover">Camera calibrated:</a>
+            </p>
+        </div>
+
+		<div class="col-1 d-flex justify-content-center">
+        <csp:if test="${isCameraCalibrated == true}">
+            <img src="/assets/img/check-circle.jpg" style="width: 22px; height: 22px" alt="check-circle">
+		</csp:if>
+		<csp:else>
+            <img src="/assets/img/x-circle.jpg" style="width: 22px; height: 22px" alt="x-circle">
+		</csp:else>
+		</div>
+    </div>
+
+    <div class="row">
+        <div class="col-auto" style="min-width: 85%">
+            <p class="text-break my-1" onclick="redirectToPage('/schedule')">
+                5. <a href="#" class="link-dark link-offset-2 link-underline-opacity-0 link-underline-opacity-100-hover">Scheduler configured:</a>
+            </p>
+        </div>
+
+		<div class="col-1 d-flex justify-content-center">
+        <csp:if test="${isSchedulerConfigured == true}">
+            <img src="/assets/img/check-circle.jpg" style="width: 22px; height: 22px" alt="check-circle">
+		</csp:if>
+		<csp:else>
+            <img src="/assets/img/x-circle.jpg" style="width: 22px; height: 22px" alt="x-circle">
+		</csp:else>
+		</div>
+    </div>
+
+    <div class="row">
+        <div class="col-auto" style="min-width: 85%">
+            <p class="text-break my-1" onclick="redirectToPage('/messaging')">
+                6. <a href="#" class="link-dark link-offset-2 link-underline-opacity-0 link-underline-opacity-100-hover">Subscribed to Telegram bot:</a>
+            </p>
+        </div>
+
+		<div class="col-1 d-flex justify-content-center">
+        <csp:if test="${isSubscribedToBot == true}">
+            <img src="/assets/img/check-circle.jpg" style="width: 22px; height: 22px" alt="check-circle">
+		</csp:if>
+		<csp:else>
+            <img src="/assets/img/x-circle.jpg" style="width: 22px; height: 22px" alt="x-circle">
+		</csp:else>
+		</div>
+    </div>
+
+    <div id="offcanvasMeterName" class="offcanvas offcanvas-end offcanvas-size-xl" tabindex="-1"
+         aria-labelledby="offcanvasPassLabel" style="max-width: 500px">
+        <div class="offcanvas-header bg-dark text-white" data-bs-theme="dark">
+            <h5 class="offcanvas-title" id="offcanvasMeterNameLabel">Meter settings</h5>
+            <button id="closeNameCanvasButtonId" type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div id="offcanvasMeterNameBody" class="offcanvas-body">
+
+            <form id="nameFormId" class="row g-2 needs-validation" novalidate>
+                <p class="fs-6 fw-light">Please enter new meter name</p>
+                <div class="input-group mb-3">
+                    <span id="inputGroupPrepend" class="input-group-text">AI-Meter-</span>
+                    <input id="nameInput"
+                           type="text"
+						   value="${meterPostfixName}"
+                           class="form-control"
+                           aria-label="MeterName"
+                           oninput="checkMeterNameInput(this)"
+                           required>
+                    <div class="invalid-feedback">
+                        Meter name should be at least 3 characters
+                    </div>
+                </div>
+                <div class="row my-3">
+                    <div class="d-grid col-6 mx-auto">
+                        <button id="nameSubmitButtonId" type="submit" class="btn btn-primary">Update</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="offcanvasTimezone" class="offcanvas offcanvas-end offcanvas-size-xl" tabindex="-1"
+         aria-labelledby="offcanvasPassLabel" style="max-width: 500px">
+        <div class="offcanvas-header bg-dark text-white" data-bs-theme="dark">
+            <h5 class="offcanvas-title" id="offcanvasZoneLabel">Time zone settings</h5>
+            <button id="closeCanvasButtonId" type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div id="offcanvasZoneBody" class="offcanvas-body">
+
+            <form id="zoneFormId" class="row g-2" novalidate>
+                <p class="fs-6 fw-light">Search for time zone</p>
+                <div class="input-group mb-3">
+                    <input id="timeZoneInput"
+                           type="text"
+                           class="form-control"
+                           aria-label="Timezone"
+                           oninput="searchForTimezone(this)"
+                           required>
+                </div>
+
+                <div id="timeZoneSearchBoxId" class="container"></div>
+
+                <div class="row my-3">
+                    <div class="d-grid col-6 mx-auto">
+                        <button id="zoneSubmitButtonId" type="submit" class="btn btn-primary">Update</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <div class="rounded me-2 d-flex justify-content-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-ban" viewBox="0 0 16 16">
+                        <path d="M15 8a6.973 6.973 0 0 0-1.71-4.584l-9.874 9.875A7 7 0 0 0 15 8ZM2.71 12.584l9.874-9.875a7 7 0 0 0-9.874 9.874ZM16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Z"/>
+                    </svg>
+                </div>
+                <strong id="toastHeaderId" class="me-auto"></strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body"></div>
+        </div>
+    </div>
+
+</main>
+
+<footer class="mt-auto">
+
+    <div class="row my-4 d-flex justify-content-center">
+        <div class="col-auto">
+            <small class="h-6 text-body-secondary my-1 d-flex justify-content-center">
+                Meter readings will be sent at:
+            </small>
+        </div>
+
+        <div class="col-auto">
+            <small class="h-6 text-body-secondary my-1 d-flex justify-content-start">
+                <strong>${nextCronDate ?: 'N/A'}</strong>
+            </small>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div id="finishButtonContainerId" class="d-grid col-6 mx-auto">
+            <button id="finishButtonId" type="button" class="btn btn-primary btn-lg">Finish</button>
+        </div>
+    </div>
+
+</footer>
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="/assets/js/jquery-3.7.0.min.js"></script>
+<script src="/assets/js/jquery.validate.min.js"></script>
+<script src="/assets/js/popper.min.js"></script>
+<script src="/assets/js/bootstrap.bundle.js"></script>
+
+<script>
+    "use strict";
+
+    const timezoneCanvas = new bootstrap.Offcanvas("#offcanvasTimezone");
+    const meterNameCanvas = new bootstrap.Offcanvas("#offcanvasMeterName");
+
+    $("#backSvgButton").on("click", function (event) {
+        event.preventDefault();
+        window.history.back();
+        location.reload();
+    });
+
+    function fnBlink() {
+        $("#headerWifiSvgId").fadeOut(1000);
+        $("#headerWifiSvgId").fadeIn(1000);
+    }
+    setInterval(fnBlink, 500);
+
+    (() => {
+        // Fetch all the forms we want to apply custom validation styles to
+        var forms = document.querySelectorAll(".needs-validation");
+
+        // Loop over them and prevent submission
+        Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener(
+                "submit",
+                function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add("was-validated");
+                },
+                false
+            );
+        });
+    })();
+
+
+    function toggleMeterNameCanvas(event) {
+        meterNameCanvas.toggle(event);
+    }
+    function toggleTimeZoneCanvas(event) {
+        timezoneCanvas.toggle(event);
+    }
+
+    function redirectToPage(url) {
+        location.href = url;
+    }
+
+    function checkMeterNameInput(input) {
+        const METER_NAME_MIN_LENGTH = 3;
+        const METER_NAME_MAX_LENGTH = 62;
+        let errorMessage = "";
+
+        if (input.value.length < METER_NAME_MIN_LENGTH) {
+            errorMessage = "Meter name should be at least " + METER_NAME_MIN_LENGTH + " symbols";
+            input.setCustomValidity(errorMessage);
+            $(".invalid-feedback").text(errorMessage);
+
+        } else if (input.value.length > METER_NAME_MAX_LENGTH) {
+            errorMessage = "Meter name should not contain more than " + METER_NAME_MAX_LENGTH + " symbols";
+            input.setCustomValidity(errorMessage);
+            $(".invalid-feedback").text(errorMessage);
+
+        } else {
+            // input is fine -- reset the error message
+            input.setCustomValidity(errorMessage);
+        }
+    }
+
+    function searchForTimezone(input) {
+        const TIMEZONE_MIN_LENGTH = 3;
+
+        if (input.value.length >= TIMEZONE_MIN_LENGTH) {
+            $.post("/find/time/zone", JSON.stringify({ zoneName: input.value}), function (data) {
+                const jsonObj = JSON.parse(data);
+				
+                let searchBox = '<div class="list-group my-2">';
+                $.each(jsonObj.zones, function (i, name) {
+                    searchBox += `<button id="zoneItem${i}" type="button" class="list-group-item list-group-item-action" onclick="selectZoneFromList(this)">${name}</button>`
+                });
+                searchBox += '</div>';
+
+                $('#timeZoneSearchBoxId').html(searchBox);
+
+            }).fail(function (data) {
+                showMessageToast(data.responseText);
+            });
+			return;
+        }
+		
+		$('#timeZoneSearchBoxId').html('');
+    }
+	
+	function selectZoneFromList(item) {
+        $('button[id^=zoneItem]').each(function () {
+            if ($(this).hasClass("active")) {
+                $(this).removeClass("active");
+            }
+        });
+        $(item).addClass("active");
+    }
+
+    $("#nameFormId").on("submit", function (e) {
+        e.preventDefault();
+        $("#nameInput-error").remove();
+
+        if (e.target.checkValidity()) {
+            const meterPrefix = $("#inputGroupPrepend").text();
+            const meterName = $("#nameInput").val();
+
+            $.post("/save/meter/name", JSON.stringify({ name: meterPrefix + meterName}), function (data) {
+                location.reload();
+
+            }).fail(function (data) {
+                showMessageToast(data.responseText);
+            });
+        }
+    });
+
+	$("#zoneFormId").on("submit", function (e) {
+        e.preventDefault();
+        $("#timeZoneInput-error").remove();
+        $('button[id^=zoneItem]').each(function () {
+            if ($(this).hasClass("active")) {
+                $.post("/save/timezone", JSON.stringify({ timeZone: $(this).text() }), function (data) {
+                    location.reload();
+
+                }).fail(function (data) {
+                    showMessageToast(data.responseText);
+                });
+            }
+        });
+    });
+
+    $("#finishButtonId").click(function () {
+		const errorList = $('[alt=x-circle]');
+        if (errorList.length !== 0) {
+            showMessageToast("No all configuration set");
+            return;
+        }
+	
+		$('#finishButtonContainerId').html(
+                '<div class="col text-center text-success fw-light">' +
+                '    <p class="h6">Success! This page can be closed</p>' +
+                '</div>');
+
+        $.post("/summary/save", function (data) {});
+
+    });
+
+    function showMessageToast(message, header = 'Error') {
+        const errorToast = $('#errorToast');
+        const toastBootstrap = bootstrap.Toast.getOrCreateInstance(errorToast);
+        $('#toastHeaderId').text(header);
+        $('.toast-body').text(message);
+        toastBootstrap.show();
+    }
+
+</script>
+</body>
+</html>

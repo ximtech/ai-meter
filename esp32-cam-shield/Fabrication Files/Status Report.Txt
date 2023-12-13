@@ -1,0 +1,11 @@
+Output: Bill of Materials
+Type  : BOM
+From  : Variant [[No Variations]] of Project [esp32-cam-shield.PrjPcb]
+   Generated File[Bill of Materials-esp32-cam-shield.xls]
+   Generated File[Bill of Materials-esp32-cam-shield.xls]
+
+
+Files Generated   : 2
+Documents Printed : 0
+
+Finished Output Generation At 14:23:40 On 13.12.2023

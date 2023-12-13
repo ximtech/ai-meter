@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<csp:render template="/sdcard/html/include/head.csp"/>
+</head>
+
+<body class="d-flex flex-column min-vh-100 container border border-dark-subtle" style="max-width: 500px">
+
+<header>
+    <csp:render template="/sdcard/html/include/header-navbar.csp"/>
+	<csp:render template="/sdcard/html/include/header-icons.csp"/>
+</header>
+
+<main>
+    <div class="row my-4">
+        <div class="col mx-4 me-4">
+            <h1 class="fs-1 fw-bold">Connect to Wifi</h1>
+            <p class="fs-5 fw-light">Available networks</p>
+            <div class="row">
+                <div class="col">
+                    <div class="list-group" id="list-tab" role="tablist">
+					
+						<csp:loop var="wifiAp" in="${apRecords}">
+                            <a id="${wifiAp.ssid}" class="list-group-item list-group-item-action" role="tab" onclick="handleWifiConnectButton(this)">
+                            <span class="row">
+                                <span class="col">${wifiAp.ssid}</span>
+                                <span class="col text-end">
+                                    <csp:if test="${wifiAp.authMode == 'WIFI_AUTH_OPEN'}">
+                                        <span class="fs-6 bi bi-unlock-fill"></span>
+                                    </csp:if>
+                                    <csp:else>
+										<span class="fs-6 bi bi-lock-fill"></span>
+                                    </csp:else>
+
+                                    <csp:if test="${wifiAp.signalStrength >= -60}">
+                                        <span class="fs-4 bi bi-wifi"></span>
+                                    </csp:if>
+                                    <csp:elseif test="${wifiAp.signalStrength >= -70}">
+                                        <span class="fs-4 bi bi-wifi-2"></span>
+                                    </csp:elseif>
+                                    <csp:else>
+                                        <span class="fs-4 bi bi-wifi-1"></span>
+                                    </csp:else>
+                                </span>
+                            </span>
+                            </a>
+                        </csp:loop>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="offcanvasPass" class="offcanvas offcanvas-end offcanvas-size-xl" tabindex="-1"
+         aria-labelledby="offcanvasPassLabel" style="max-width: 500px">
+        <div class="offcanvas-header bg-dark text-white" data-bs-theme="dark">
+            <h5 class="offcanvas-title" id="offcanvasPassLabel"></h5>
+            <button id="closeCanvasButtonId" type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div id="offcanvasPassBody" class="offcanvas-body">
+
+            <form id="passFormId" class="row g-2 needs-validation" novalidate>
+                <p class="fs-6 fw-light">Please enter Wi-Fi password</p>
+                <div class="input-group mb-3">
+                    <input id="passwordInput"
+                           type="password"
+                           class="form-control"
+                           placeholder="Password"
+                           aria-label="Password"
+                           oninput="checkPasswordInput(this)"
+                           required>
+                    <span class="input-group-text" onclick="toggleShowPassword();">
+						<span id="eyeSlashId" class="bi bi-eye-slash-fill"></span>
+					</span>
+                    <div class="invalid-feedback">
+                        Password should be at least 8 symbols
+                    </div>
+                </div>
+                <div class="row my-3">
+                    <div class="d-grid col-6 mx-auto">
+                        <button id="passSubmitButtonId" type="submit" class="btn btn-primary">Connect</button>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+</main>
+
+<footer class="mt-auto">
+    <div class="row mb-5">
+        <div class="d-grid col-6 mx-auto">
+            <button id="nextStepButtonId" type="button" class="btn btn-primary btn-lg visually-hidden">Next</button>
+        </div>
+    </div>
+</footer>
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="/assets/js/jquery-3.7.0.min.js"></script>
+<script src="/assets/js/jquery.validate.min.js"></script>
+<script src="/assets/js/popper.min.js"></script>
+<script src="/assets/js/bootstrap.bundle.js"></script>
+
+<script>
+    $("#backSvgButton").on("click", function (event) {
+        event.preventDefault();
+        window.history.back();
+    });
+</script>
+
+<script>
+    "use strict";
+
+    const canvas = new bootstrap.Offcanvas("#offcanvasPass");
+    let isConnectionAvailable = true;
+	let redirectUrl = "";
+
+    function fnBlink() {
+        $("#headerWifiSvgId").fadeOut(1000);
+        $("#headerWifiSvgId").fadeIn(1000);
+    }
+    setInterval(fnBlink, 500);
+
+    function handleWifiConnectButton(event) {
+        const isOpenWifi = $(event).find(".bi-unlock-fill").length === 1;
+        if (isOpenWifi && isConnectionAvailable) {
+            const wifiNameId = $(event).attr("id");
+            connectToWifi(wifiNameId, '');
+            isConnectionAvailable = false;
+            return;
+        }
+        toggleCanvas(event);
+    }
+	
+	$("#closeCanvasButtonId").on("click", function (e) {
+        $('#passFormId')
+            .trigger("reset")
+            .removeClass('was-validated')
+        $("#passwordInput").val('');
+    })
+
+    function toggleCanvas(event) {
+        if (isConnectionAvailable) {
+            $("#offcanvasPassLabel").text(event.id);
+            $("#passwordInput").attr("type", "password");
+            $("#eyeSlashId").addClass("bi bi-eye-slash-fill");
+            canvas.toggle(event);
+        }
+    }
+
+    function checkPasswordInput(input) {
+        const PASSWORD_MIN_LENGTH = 8;
+		const PASSWORD_MAX_LENGTH = 62;
+        if (input.value.length < PASSWORD_MIN_LENGTH) {
+            input.setCustomValidity("Password should be at least " + PASSWORD_MIN_LENGTH + " symbols");
+			
+        } else if (input.value.length >= PASSWORD_MAX_LENGTH) {
+			input.setCustomValidity("Password too long. Maximum password length is " + PASSWORD_MAX_LENGTH + " symbols");
+		
+		} else {
+            // input is fine -- reset the error message
+            input.setCustomValidity("");
+        }
+    }
+
+    (() => {
+        // Fetch all the forms we want to apply custom validation styles to
+        var forms = document.querySelectorAll(".needs-validation");
+
+        // Loop over them and prevent submission
+        Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener(
+                "submit",
+                function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add("was-validated");
+                },
+                false
+            );
+        });
+    })();
+
+    function toggleShowPassword() {
+        const passType = $("#passwordInput").attr("type");
+        $("#eyeSlashId").removeClass();
+
+        if (passType === "password") {
+            $("#passwordInput").attr("type", "text");
+            $("#eyeSlashId").addClass("bi bi-eye-fill");
+            
+        } else {
+            $("#passwordInput").attr("type", "password");
+            $("#eyeSlashId").addClass("bi bi-eye-slash-fill");
+        }
+    }
+
+    $("#passFormId").on("submit", function (e) {
+        e.preventDefault();
+        $("#passwordInput-error").remove();
+
+        if (e.target.checkValidity()) {
+            toggleCanvas(e);
+            isConnectionAvailable = false;
+            const wifiNameId = $("#offcanvasPassLabel").text();
+            const wifiPass = $("#passwordInput").val();
+            connectToWifi(wifiNameId, wifiPass);
+        }
+    });
+
+    function connectToWifi(wifiNameId, wifiPassword) {
+        $("#" + wifiNameId).find(".col.text-end").replaceWith(   // set spinner
+            "<span class=\"col text-end\">" +
+            "<span class=\"spinner-border text-success ms-auto\" " +
+            "       style=\"width: 1.5rem; height: 1.5rem;\" " +
+            "       role=\"status\" " +
+            "       aria-hidden=\"true\"></span></span>"
+        );
+		
+        $.post("/save/wifi", JSON.stringify({ ssid: wifiNameId, password: wifiPassword}), function (data) {
+			redirectUrl = "/calibrate";
+			handleSuccessConnection(wifiNameId);
+
+        }).fail(function (data) {
+            handleErrorConnection(wifiNameId);
+        });
+    }
+
+    function handleErrorConnection(id) {
+        $("#" + id)
+            .removeClass("list-group-item-action")
+			.removeClass("list-group-item-success")
+            .addClass("list-group-item-danger")
+            .find(".spinner-border")
+            .replaceWith("<span class=\"col fs-4 text-end bi bi-exclamation-triangle\"></span>");
+        isConnectionAvailable = true;
+    }
+
+    function handleSuccessConnection(id) {
+        $("#" + id)
+            .removeClass("list-group-item-action")
+			.removeClass("list-group-item-danger")
+            .addClass("list-group-item-success")
+            .find(".spinner-border")
+            .replaceWith("<span class=\"col fs-4 text-end bi bi-check-circle\"></span>");
+        $("#nextStepButtonId").removeClass("visually-hidden");
+    }
+
+    $("#nextStepButtonId").on("click", function (e) {
+        location.href = redirectUrl;
+    });
+
+</script>
+</body>
+</html>

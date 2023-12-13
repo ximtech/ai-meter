@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<csp:render template="/sdcard/html/include/head.csp"/>
+</head>
+
+<body class="d-flex flex-column min-vh-100 container border border-dark-subtle" style="max-width: 500px">
+
+<header>
+    <csp:render template="/sdcard/html/include/header-navbar.csp"/>
+</header>
+
+<main>
+    <div class="card my-3 mx-3">
+        <img id="calibrationImageId" 
+			 src="${calibrationPhotoUrl}"
+             class="card-img-top mx-auto d-block my-3 border border-3 border-success"
+             style="max-width: 300px; max-height: 300px"
+             alt="Meter display">
+        <div class="card-body my-2">
+            <h5 class="card-title">Calibration</h5>
+            <p class="card-text">Take a photo of meter display and press 'Next' button if it is ok for you.</p>
+
+            <div class="row my-3 mx-2">
+                <div class="col">
+                    <label for="flashIntensity" class="form-label fs-6 fw-light">Flash light intensity:</label>
+                    <input id="flashIntensity" type="range" class="form-range" min="0" max="24" value="${rangeLevel}">
+                </div>
+            </div>
+
+            <button id="photoButtonId" type="button" class="btn btn-dark w-50">Photo</button>
+        </div>
+    </div>
+</main>
+
+<footer class="mt-auto">
+    <div class="row mb-5">
+        <div class="d-grid col-6 mx-auto">
+            <button id="nextStepButtonId" type="button" class="btn btn-primary btn-lg">Next</button>
+        </div>
+    </div>
+</footer>
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="/assets/js/jquery-3.7.0.min.js"></script>
+<script src="/assets/js/jquery.validate.min.js"></script>
+<script src="/assets/js/popper.min.js"></script>
+<script src="/assets/js/bootstrap.bundle.js"></script>
+
+<script>
+    $("#backSvgButton").on("click", function (event) {
+        event.preventDefault();
+        window.history.back();
+    });
+</script>
+
+<script>
+    "use strict";
+
+	$("#photoButtonId").on("click", function (envent) {
+        $("#photoButtonId").prop("disabled", true);
+
+		const ledRange = $("#flashIntensity").val();
+        $.get("/camera/image?ledRange=" + ledRange, function (data) {
+            $("#calibrationImageId").attr("src", data + "?rand=" + Math.random());
+        }).always(function () {
+            $("#photoButtonId").prop("disabled", false);
+        });
+    });
+
+    $("#nextStepButtonId").on("click", function (enven) {
+        location.href = "/schedule"
+    });
+
+
+</script>
+</body>
+</html>
