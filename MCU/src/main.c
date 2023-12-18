@@ -252,7 +252,7 @@ void app_main() {
         } while (!isWifiHasConnection() && i < 3);
 
         if (isWifiHasConnection()) {
-            setupNtpTime(); // init ntp time, at this moment internet should be accessible
+            setupNtpTime(); // init ntp time, we have connection already
             if (!isProjectTimeSet()) {
                 esp_restart();  // time is not configured, retry after restart
             }
@@ -463,8 +463,8 @@ static void executeCronJob() {
 }
 
 static void cleanupPhotoDirectory() {
-    File *fileBuffer = malloc(sizeof(struct File) * MAX_PHOTOS_IN_DIR + 1);
-    fileVector *photoVec = NEW_VECTOR_BUFF(File, file, fileBuffer, MAX_PHOTOS_IN_DIR + 1);
+    File *fileBuffer = callocPsramHeap(MAX_PHOTOS_IN_DIR, sizeof(struct File));
+    fileVector *photoVec = NEW_VECTOR_BUFF(File, file, fileBuffer, MAX_PHOTOS_IN_DIR);
     listFiles(&imageDirRoot, photoVec, false);
 
     LOG_INFO(TAG, "Total photos in dir: [%d]", fileVecSize(photoVec));
@@ -479,7 +479,7 @@ static void cleanupPhotoDirectory() {
         }
     }
 
-    free(fileBuffer);
+    freePsramHeap(fileBuffer);
 }
 
 static int fileDateCompareFunction (const void *one, const void *two) {

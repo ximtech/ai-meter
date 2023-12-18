@@ -185,7 +185,7 @@ uint32_t cameraCaptureToFile(char *fileName) {
     uint32_t bytesWritten = writeCharsToFile(imageFile, (char *) cameraFrameBuffer->buf, cameraFrameBuffer->len, false);
     LOG_INFO(TAG, "Image bytes written to file: %llu", bytesWritten);
 
-    //return the frame buffer back to the driver for reuse
+    //return the frame buffer to the driver for reuse
 	esp_camera_fb_return(cameraFrameBuffer);
     return bytesWritten;
 }
@@ -203,7 +203,7 @@ uint32_t cameraCaptureToResponse(httpd_req_t *request) {
     httpd_resp_set_hdr(request, "Content-Type", "image/jpeg");
     httpd_resp_send(request, (char *) cameraFrameBuffer->buf, (ssize_t) imageSize);
 
-    //return the frame buffer back to the driver for reuse
+    //return the frame buffer to the driver for reuse
 	esp_camera_fb_return(cameraFrameBuffer);
     return imageSize;
 }

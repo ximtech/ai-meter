@@ -119,7 +119,7 @@ esp_err_t sendTelegramPhotoWithCaption(File *imageFile, const char *message, uin
 
         status = esp_http_client_perform(restClient);
         if (status == ESP_OK) {
-            LOG_INFO(TAG, "Image: [%s] successfully sended", imageName->value);
+            LOG_INFO(TAG, "Image: [%s] successfully sent", imageName->value);
         } else {
             LOG_ERROR(TAG, "Failed to send image: [%s]. Status code: [%s]", imageName->value, esp_err_to_name(status));
         }

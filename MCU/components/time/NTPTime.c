@@ -37,7 +37,6 @@ bool setupNtpTime() {
     char *formattedTime = getCurrentTimeString(DATE_TIME_FORMAT_ZONE_STR);
     if (isProjectTimeSet()) {
         LOG_INFO(TAG, "Time is set: [%s]", formattedTime);
-        return true;
     }
 
     char *timeServer = getProperty(&appConfig, "ntp.time.server");

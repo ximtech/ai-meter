@@ -72,7 +72,7 @@ esp_err_t wifiInitSoftAp(Properties *configProp) {
     wifiConfig.ap.max_connection = atoi(apMaxConnections);
     wifiConfig.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
 
-    if (strlen(apPassword) == 0) {
+    if (isCstrEmpty(apPassword)) {
         LOG_DEBUG(TAG, "No password set for Soft AP, using open access");
         wifiConfig.ap.authmode = WIFI_AUTH_OPEN;
     }
@@ -329,13 +329,14 @@ static void wifiEventHandler(void* arg, esp_event_base_t eventBase, int32_t even
 			} else if (disconnected->reason == WIFI_REASON_BEACON_TIMEOUT) {
 				LOG_WARN(TAG, "Disconnected: [%d], Timeout", disconnected->reason);
 
-			} else {
+			} else if (disconnected->reason == WIFI_REASON_ASSOC_LEAVE) {
+                LOG_WARN(TAG, "Disconnected: [%d], Client leave", disconnected->reason);
+
+            } else {
 				LOG_WARN(TAG, "Disconnected: [%d], Unknown", disconnected->reason);
 			}
 		}
-
         xEventGroupSetBits(wifiEventGroup, WIFI_FAIL_MAX_RETRIES_BIT);
-		LOG_ERROR(TAG, "Disconnected, multiple reconnect attempts failed: [%d], still retrying...", disconnected->reason);
 
     } else if (eventBase == WIFI_EVENT && eventId == WIFI_EVENT_STA_CONNECTED) {
         LOG_INFO(TAG, "Connected to : %s, RSSI: %d", wlanInnerConfig.ssid, getWifiRssi());

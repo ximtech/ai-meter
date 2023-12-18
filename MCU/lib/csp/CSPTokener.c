@@ -352,11 +352,6 @@ static void addExpToken(LexerProcessor *processor, CspExprType type, void *token
 }
 
 static void *saveExpValue(LexerProcessor *processor, CspExprType type, char *value) {
-    if (value == NULL) {
-        WRITE_TOKENER_ERROR(processor, "Mandatory field: [value] can't be null");
-        return NULL;
-    }
-
     if (type != CSP_EXP_NUMBER_INT && type != CSP_EXP_NUMBER_FLOAT) {   // String literals, NULL, variable name
         char *tokenValue = malloc(sizeof(char) * strlen(value) + 1);
         if (tokenValue == NULL) {

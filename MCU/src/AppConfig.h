@@ -11,7 +11,7 @@
 #define LOGGER_MAX_SUBSCRIBERS 3
 #define LOGGER_FILE_NAME_MAX_SIZE CONFIG_FATFS_MAX_LFN
 
-#define PATH_MAX_LEN CONFIG_FATFS_MAX_LFN    //Max length a file path can have on storage
+#define PATH_MAX_LEN (CONFIG_FATFS_MAX_LFN + 1)    //Max length a file path can have on storage
 #define MAX_FILES_IN_DIR 256
 
 #define CONFIG_FILE             SD_CARD_ROOT "/application.properties"
@@ -31,12 +31,12 @@
 
 #define DEFAULT_TIME_ZONE "UTC"
 
-#define MAX_FILE_SIZE "8 MB" // Max size of an individual file. Make sure this value is same as that set in upload_script.html and ota_page.html!
+#define MAX_FILE_SIZE "8 MB" // Max size of an individual file. Make sure this value is the same as that set in upload_script.html and ota_page.html!
 #define MAX_PHOTOS_IN_DIR 64
 #define OLDEST_PHOTOS_TO_REMOVE_COUNT 16
 
 // Soft AP default config
-#define DEFAULT_ESP_WIFI_AP_SSID         "AI-Meter"
+#define DEFAULT_ESP_WIFI_AP_SSID         "AI-Meter-AP"
 #define DEFAULT_ESP_WIFI_AP_PASSWORD      ""
 #define DEFAULT_ESP_WIFI_AP_CHANNEL       "11"
 #define DEFAULT_MAX_STA_CONNECTIONS       "1"

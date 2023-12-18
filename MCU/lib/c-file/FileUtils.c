@@ -208,7 +208,7 @@ void listFilesAndDirs(File *directory, fileVector *vec, bool recursive) {
 }
 
 void cleanDirectory(File *directory) {
-    fileVector *vec = newfileBuffVector(&(fileVector) {0}, fileBuffer, MAX_FILES_IN_DIR);
+    fileVector *vec = NEW_VECTOR_BUFF(File, file,  fileBuffer, MAX_FILES_IN_DIR);
     listFilesInDir(directory, vec, true, true);
     removeFilesInDir(vec);  // remove all files first
     removeSubDirs(vec);     // then remove directories
@@ -271,22 +271,21 @@ bool copyDirectory(File *srcDir, File *destDir) {
         return false;
     }
 
-    fileVector *vec = newfileBuffVector(&(fileVector) {0}, fileBuffer, MAX_FILES_IN_DIR);
+    fileVector *vec = NEW_VECTOR_BUFF(File, file, fileBuffer, MAX_FILES_IN_DIR);
     listFilesInDir(srcDir, vec, true, true);
     for (uint32_t i = 0; i < fileVecSize(vec); i++) {
         File srcFile = fileVecGet(vec, i);
         BufferString *subPath = SUBSTRING_CSTR_AFTER(PATH_MAX_LEN, srcFile.path, srcDir->path);
-        File copiedFile = {0};
-        newFileFromParent(&copiedFile, destDir, subPath->value);
+        File *copiedFile = FILE_OF(destDir, subPath->value);
 
         if (isDirectory(&srcFile)) {
-            if (MKDIR(copiedFile.path) == -1 && errno != EEXIST) {
+            if (MKDIR(copiedFile->path) == -1 && errno != EEXIST) {
                 return false;
             }
             continue;
         }
 
-        if (!createFile(&copiedFile)) {
+        if (!createFile(copiedFile)) {
             return false;
         }
     }
@@ -445,21 +444,29 @@ static void listFilesInDir(File *directory, fileVector *vec, bool recursive, boo
             continue;
         }
 
-        File file = {0};
-        strncpy(file.path, directory->path, directory->pathLength);
-        file.pathLength = directory->pathLength;
-        file.pathLength = concatEndSeparator(file.path, file.pathLength);
+        File tmpFile = {0};
+        strncpy(tmpFile.path, directory->path, directory->pathLength);
+        tmpFile.pathLength = directory->pathLength;
+        tmpFile.pathLength = concatEndSeparator(tmpFile.path, tmpFile.pathLength);
 
         uint32_t dirNameLength = strlen(inDirectory->d_name);
-        strcat(file.path, inDirectory->d_name);
-        file.pathLength += dirNameLength;
-        if ((includeDirs || isFile(&file)) && !fileVecAdd(vec, file)) {
-            closedir(directory->dir);
-            return;
+        strcat(tmpFile.path, inDirectory->d_name);
+        tmpFile.pathLength += dirNameLength;
+        if (includeDirs || isFile(&tmpFile)) {
+            if (vec->size >= vec->capacity) {
+                closedir(directory->dir);
+                return;
+            }
+
+            File *file = &vec->items[vec->size];
+            strncpy(file->path, tmpFile.path, tmpFile.pathLength);
+            file->pathLength = tmpFile.pathLength;
+            file->path[file->pathLength] = '\0';
+            vec->size++;
         }
 
-        if (recursive && isDirectory(&file)) {
-            listFilesInDir(&file, vec, recursive, includeDirs);
+        if (recursive && isDirectory(&tmpFile)) {
+            listFilesInDir(&tmpFile, vec, recursive, includeDirs);
         }
     }
     closedir(directory->dir);
