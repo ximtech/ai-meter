@@ -9,9 +9,11 @@
 This project is a try to create a unified platform that can receive and 
 handle telemetry data such as water, gas, and electricity meter readings autonomously and in an easily configurable way.
 
-### Platform based on:
-
-<img src="Images/esp32-cam.png" width="300px" alt="esp32-cam">
+<p float="left">
+  <img src="Images/esp32-cam.png" width="300" alt="esp32-cam">
+  <img src="Images/green-right-arrow-600x320.png" width="100" height="150" alt="arrow"/> 
+  <img src="Images/meter_photo.png" width="300" alt="meter_photo"/>
+</p>
 
 ## Features
 
@@ -40,9 +42,15 @@ handle telemetry data such as water, gas, and electricity meter readings autonom
   * [Workflow](#workflow)
   * [Setup as needed](#setup-as-needed)
 - [Hardware](#hardware)
-  * [Custom board adapter](#custom-board-adapter)
+  * [Adapter board](#adapter-board)
+  * [Design notes](#design-notes)
+  * [Power supply](#power-supply)
+  * [Batteries](#batteries)
   * [External antenna](#external-antenna)
+  * [Wiring](#wiring)
 - [Firmware](#firmware)
+  - [Prerequisites](#prerequisites)
+  - [Build](#build)
 - [Housing](#housing)
 - [Admin page](#admin-page)
 
@@ -153,18 +161,22 @@ After soldering all together, it should look like on a photo:<br/>
 
 - Esp-idf and Platformio should be already installed 
 
+### Build
+
 The most common way to get firmware is to build it from sources:
 - Clone this repository and open `MCU` directory as a project:
 - In `Visual Studio Code` -> Open Folder -> MCU
 - Then run PlatformIO build: <br/>
-<img src="Images/platformio-build.png" width="100" alt="platformio-build">
+<img src="Images/platformio-build.png" width="200" alt="platformio-build">
 - If all ok, plug the device:<br/>
-<img src="Images/upload_connection.png" width="100" alt="upload_connection_1">
-***OR*** 
-<img src="Images/upload_connection.png" width="100" alt="upload_connection_2">
+
+|                                  With Adapter                                  |                                    Default                                     |
+|:------------------------------------------------------------------------------:|:------------------------------------------------------------------------------:|
+| <img src="Images/upload_connection.png" width="150" alt="upload_connection_1"> | <img src="Images/upload_connection.png" width="150" alt="upload_connection_2"> |
+
 - Then upload firmware and flash the device
 - When the process is finished, turn on the monitor to see log outputs:<br/>
-<img src="Images/serial-monitor.png" width="100" alt="battery">
+<img src="Images/serial-monitor.png" width="300" alt="battery">
 - By default, console log enabled and `debug` level is set (can be changed in config)
 
 ## Housing
