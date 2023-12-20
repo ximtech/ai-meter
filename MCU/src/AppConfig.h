@@ -32,7 +32,7 @@
 #define DEFAULT_TIME_ZONE "UTC"
 
 #define MAX_FILE_SIZE "8 MB" // Max size of an individual file. Make sure this value is the same as that set in upload_script.html and ota_page.html!
-#define MAX_PHOTOS_IN_DIR 64
+#define MAX_PHOTOS_IN_DIR 128
 #define OLDEST_PHOTOS_TO_REMOVE_COUNT 16
 
 // Soft AP default config

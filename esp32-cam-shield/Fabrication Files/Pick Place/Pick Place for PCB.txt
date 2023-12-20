@@ -4,13 +4,15 @@ C:\Users\Stason\Desktop\Projects\ESP32\ai-meter\esp32-cam-shield\.\Fabrication F
 ========================================================================================================================
 File Design Information:
 
-Date:       13.12.23
-Time:       14:22
-Revision:   Not in VersionControl
+Date:       20.12.23
+Time:       16:57
+Revision:   01873d27d29e46c15666ad6c1319d3694cbf202c
 Variant:    No variations
 Units used: mm
 
 Designator Comment              Layer    Footprint               Center-X(mm) Center-Y(mm) Rotation Description                                                                                                             
+TP10       "Test point"         TopLayer TEST_POINT              22.2500      17.7250      90       ""                                                                                                                      
+R13        "5 kOhms"            TopLayer RES_0603_1608           18.6555      5.7500       270      "RES SMD 5K OHM 0.1% 0.15W 0603"                                                                                        
 5V         "Header 3"           TopLayer HDR1X3                  17.9850      38.2500      180      "Header, 3-Pin"                                                                                                         
 3.3V       "Header 3"           TopLayer HDR1X3                  8.4650       38.2500      360      "Header, 3-Pin"                                                                                                         
 LED1       "Bicolor 1615"       TopLayer LED_0603_1615_BICOLOR   22.5000      6.7500       360      "SMD SMT Light Emitting Diode 1.6*0.8*0.6MM"                                                                            

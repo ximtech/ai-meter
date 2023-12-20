@@ -279,11 +279,11 @@ void app_main() {
         LOG_INFO(TAG, "Cron initialized OK!");
     }
 
-    executeCronJob();   // send meter photo with data if it is time
+    executeCronJob();   // send a meter photo with data if it is time
     statusLedOff();
     cleanupPhotoDirectory();    // remove old photos
     destroyWifi();              // disconnect from Wi-Fi
-    configureButtonWakeup();    // if button pressed then need to reconfigure app settings, wakeup from sleep and start soft AP server
+    configureButtonWakeup();    // if button pressed, then need to reconfigure app settings, wakeup from sleep and start soft AP server
     enterTimerDeepSleep(calculateSecondsToWaitFromNow());
 }
 
@@ -458,13 +458,15 @@ static void executeCronJob() {
     }
 
     LOG_INFO(TAG, "Cron job finished");
-    putProperty(&wlanConfig, PROPERTY_PREVIOUS_CRON_DATE_KEY, zonedDateTimeToStrByFormat(&zdtNow, DATE_TIME_FORMAT_SHORT));
+    // End time should be over max gap, its guarantee that photo will not be sent twice or more when a device powered just in a time gap, or wakeup seconds calculated incorrectly
+    ZonedDateTime *jobEndDateTime = zonedDateTimePlusMinutes(&Z_DATE_TIME_COPY(zdtNow), CRON_JOB_ALLOWED_MINUTES_GAP + 1);
+    putProperty(&wlanConfig, PROPERTY_PREVIOUS_CRON_DATE_KEY, zonedDateTimeToStrByFormat(jobEndDateTime, DATE_TIME_FORMAT_SHORT));
     storeProperties(&wlanConfig, WLAN_CONFIG_FILE);
 }
 
 static void cleanupPhotoDirectory() {
-    File *fileBuffer = callocPsramHeap(MAX_PHOTOS_IN_DIR, sizeof(struct File));
-    fileVector *photoVec = NEW_VECTOR_BUFF(File, file, fileBuffer, MAX_PHOTOS_IN_DIR);
+    File *fileBuffer = callocPsramHeap(MAX_PHOTOS_IN_DIR + 1, sizeof(struct File));
+    fileVector *photoVec = NEW_VECTOR_BUFF(File, file, fileBuffer, MAX_PHOTOS_IN_DIR + 1);
     listFiles(&imageDirRoot, photoVec, false);
 
     LOG_INFO(TAG, "Total photos in dir: [%d]", fileVecSize(photoVec));
@@ -474,8 +476,8 @@ static void cleanupPhotoDirectory() {
         qsort(photoVec->items, fileVecSize(photoVec), sizeof(File), fileDateCompareFunction);   // sort by photo date time from it name, first will be the oldest one
 
         for (int i = 0; i < OLDEST_PHOTOS_TO_REMOVE_COUNT; i++) { // remove oldest 20 photos
-            File fileToRemove = fileVecRemoveAt(photoVec, i);
-            remove(fileToRemove.path);
+            File fileToRemove = fileVecGet(photoVec, i);
+            remove(fileToRemove.path);    // calibration photo will be in the list bottom, so it will not be deleted
         }
     }
 
@@ -485,7 +487,7 @@ static void cleanupPhotoDirectory() {
 static int fileDateCompareFunction (const void *one, const void *two) {
     BufferString *firstDateStr = SUBSTRING_CSTR_BETWEEN(32, ((File *) one)->path, "photo_", ".jpeg");   // extract date-time string
     BufferString *secondDateStr = SUBSTRING_CSTR_BETWEEN(32, ((File *) two)->path, "photo_", ".jpeg");
-    DateTime firstDateTime = parseToDateTime(firstDateStr->value, &photoFileDateTimeFormatter);
-    DateTime secondDateTime = parseToDateTime(secondDateStr->value, &photoFileDateTimeFormatter);
+    DateTime firstDateTime = parseToDateTime(stringValue(firstDateStr), &photoFileDateTimeFormatter);
+    DateTime secondDateTime = parseToDateTime(stringValue(secondDateStr), &photoFileDateTimeFormatter);
     return (int) dateTimeCompare(&firstDateTime, &secondDateTime);
 }

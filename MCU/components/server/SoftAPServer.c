@@ -322,7 +322,7 @@ static esp_err_t connectPageHandler(httpd_req_t *request) {
     wifi_ap_record_t apRecords[DEFAULT_SCAN_LIST_SIZE] = {0};
     uint16_t apCount = scanWifiAccessPoints(apRecords, DEFAULT_SCAN_LIST_SIZE);
 
-    CspObjectMap *paramMap = newCspParamObjMap(32);
+    CspObjectMap *paramMap = newCspParamObjMap(8);
     CspObjectArray *apRecordList = mapApRecordsToList(apRecords, apCount);
     cspAddVecToMap(apRecordList, paramMap, "apRecords");
     return renderHtmlTemplate(request, connectPage, paramMap);
@@ -544,14 +544,15 @@ static esp_err_t saveWifiCredentialsAjaxHandler(httpd_req_t *request) {
 
                 if (isDateTimeValid(&zdateTime.dateTime)) {
                     LOG_DEBUG(TAG, "Received time string successfully parsed...");
-                    int64_t epoch = dateTimeToEpochSecond(&zdateTime.dateTime, zdateTime.offset);
-                    if (timeZone.id != NULL && strcmp(timeZone.id, UTC.id) != 0) free((char *) timeZone.id);
+                    if (timeZone.id != NULL && strcmp(timeZone.id, UTC.id) != 0) {
+                        free((char *) timeZone.id);
+                    }
 
                     timeZone.id = strdup(timezoneName);
                     timeZone.utcOffset = zdateTime.zone.utcOffset;
                     timeZone.names = zdateTime.zone.names;
                     LOG_INFO(TAG, "Time zone updated. Zone id: [%s], Offset: %ds", timeZone.id, timeZone.utcOffset);
-                    setupNtpTime(); // init ntp time, at this moment internet should be accessible
+                    setupNtpTime(); // init ntp time, at this moment the internet should be accessible
                     loadTimezoneHistoricRules(&timeZone);
 
                 } else {
