@@ -9,11 +9,17 @@
 This project is a try to create a unified platform that can receive and 
 handle telemetry data such as water, gas, and electricity meter readings autonomously and in an easily configurable way.
 
-<p float="left">
-  <img src="Images/esp32-cam.png" width="300" alt="esp32-cam">
-  <img src="Images/green-right-arrow-600x320.png" width="100" height="150" alt="arrow"/> 
-  <img src="Images/meter_photo.png" width="300" alt="meter_photo"/>
-</p>
+<img src="Images/intro.png" width="717" alt="esp32-cam">
+
+[//]: # (<p float="left">)
+
+[//]: # (  <img src="Images/esp32-cam.png" width="300" alt="esp32-cam">)
+
+[//]: # (  <img src="Images/green-right-arrow-600x320.png" width="100" height="150" alt="arrow"/> )
+
+[//]: # (  <img src="Images/meter_photo.png" width="300" alt="meter_photo"/>)
+
+[//]: # (</p>)
 
 ## Features
 
