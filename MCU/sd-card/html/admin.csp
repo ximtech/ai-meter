@@ -7,7 +7,40 @@
 <body class="d-flex flex-column min-vh-100 container border border-dark-subtle" style="max-width: 500px">
 
 <header>
-    <csp:render template="/sdcard/html/include/header-navbar.csp"/>
+	<div class="row" style="min-height: 50px">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark bd-navbar sticky-top" data-bs-theme="dark">
+            <div class="container-fluid">
+                <div class="col-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="white" id="backSvgButton" class="bi bi-arrow-return-left" viewBox="0 0 16 16">
+						<path fill-rule="evenodd" d="M14.5 1.5a.5.5 0 0 1 .5.5v4.8a2.5 2.5 0 0 1-2.5 2.5H2.707l3.347 3.346a.5.5 0 0 1-.708.708l-4.2-4.2a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 8.3H12.5A1.5 1.5 0 0 0 14 6.8V2a.5.5 0 0 1 .5-.5z"/>
+					</svg>
+                </div>
+                <div class="col-auto text-center">
+                    <h1 class="navbar-brand">Admin Panel</h1>
+                </div>
+                <div class="col-auto text-center">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-html="true"
+                            data-bs-container="body"
+                            data-bs-toggle="popover"
+                            data-bs-placement="left"
+                            data-bs-content="
+                            <h6>Git Branch: ${gitBranch ?: 'N/A'}</h6>
+                            <h6>Git Tag: ${gitTag ?: 'N/A'}</h6>
+                            <h6>Git Revision: ${gitRevision ?: 'N/A'}</h6>
+                            <h6>Build time: ${buildTime ?: 'N/A'}</h6>
+                            ">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                             class="bi bi-list" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd"
+                                  d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </div>
 </header>
 
 <main>
@@ -30,6 +63,15 @@
                     role="tab"
                     aria-controls="nav-profile"
                     aria-selected="false">Logs</button>
+					
+			<button class="nav-link"
+                    id="nav-profile-tab-2"
+                    data-bs-toggle="tab"
+                    data-bs-target="#nav-fs"
+                    type="button"
+                    role="tab"
+                    aria-controls="nav-fs"
+                    aria-selected="false">File System</button>
         </div>
     </nav>
 
@@ -111,6 +153,21 @@
 
             </div>
         </div>
+
+        <div class="tab-pane fade" id="nav-fs" role="tabpanel" aria-labelledby="nav-profile-tab">
+            <div class="accordion my-4" id="fsAccordionId">
+
+                <div class="container my-2 mx-3">
+                    <div class="container">
+                        <p>
+                            <a href="#" class="link-dark bi bi-caret-right-fill m-2" onclick="handleDir(this)"></a>
+                            <span class="bi bi-folder m-1"></span><strong>${fsRootDirName}</strong>
+                            <a href="#" class="link-success bi bi-upload m-2" onclick="toggleUploadModal(this)"></a>
+                        </p>
+                        <input type="hidden" value="${'/' + fsRootDirName}">
+                    </div>
+            </div>
+        </div>
     </div>
 
 
@@ -130,6 +187,31 @@
                     <button type="button" class="btn btn-primary" onclick="removeEntry()">Delete</button>
                     <input id="keyInput" hidden/>
                     <input id="propFileInput" hidden/>
+                </div>
+            </div>
+        </div>
+    </div>
+	
+    <!-- Upload Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-success" id="uploadModalLabel">File Upload</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label id="formFileUploadLabel" for="formFileUpload" class="form-label"></label>
+                        <input id="formFileUpload" class="form-control" type="file">
+                    </div>
+					<div>
+                        <p><small class="text-success">To create subfolder, add slash '/' with folder name</small></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="uploadFile()">Upload</button>
                 </div>
             </div>
         </div>
@@ -164,6 +246,9 @@
 
 <script>
     "use strict";
+	
+	const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
+    const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
 
     let deleteRowForm;
 
@@ -286,6 +371,154 @@
         $.post("/admin/esp/restart", function (data) {
             alert('Restarted');
         });
+    }
+
+   function handleDir(form) {
+       let currentItem = $(form).toggleClass('bi-caret-right-fill').toggleClass('bi-caret-down-fill');
+       let currentDir = $(currentItem).parent();
+       let fullPath = $(currentDir).parent().find('input').val();
+
+       if ($(currentItem).hasClass('bi-caret-down-fill')) {    // Expand dir
+           let dirContainer = $(currentDir).parent();
+           $.get("/admin/fs/dir/content?dirPath=" + fullPath, function (data) {
+               let jsonRootObj = jQuery.parseJSON(data);
+			   jsonRootObj.content.sort(dirAndFileSort);	// sort array that dir will be at the top
+
+               $.each(jsonRootObj.content, function (key, item) {
+                   let lastSeparatorIndex = item.path.lastIndexOf('/');
+                   if (lastSeparatorIndex < 0) {
+                       lastSeparatorIndex = item.path.lastIndexOf('\\');
+                   }
+
+                   const nameOnly = item.path.substring(lastSeparatorIndex > 0 ? lastSeparatorIndex + 1 : 0);
+                   if (item.type === 'dir') {
+                       dirContainer.append(
+                           '<div class="container m-1">' +
+                           '    <p>' +
+                           '       <a href="#" class="link-dark bi bi-caret-right-fill m-2" onclick="handleDir(this)"></a>' +
+                           '       <span class="bi bi-folder m-1"></span><strong>' + nameOnly + '</strong>' +
+                           '       <a href="#" class="link-success bi bi-upload m-2" onclick="toggleUploadModal(this)"></a>' +
+                           '   </p>' +
+                           '    <input type="hidden" value="' + item.path + '">' +
+                           '</div>');
+                   } else {
+                       dirContainer.append(
+                           '<div class="container m-3">' +
+                           '   <p><span class="bi ' + fileTypeToIconClass(item.path) + ' m-1"></span>' + nameOnly +
+                           '       <a href="#" class="link-success bi bi-download m-3" onclick="downloadFile(this)"></a>' +
+                           '       <a href="#" class="link-danger bi bi-trash" onclick="deleteFile(this)"></a>' +
+                           '   </p>' +
+                           '   <input type="hidden" value="' + item.path + '">' +
+                           '</div>');
+                   }
+               });
+           });
+
+       } else {    // Collapse dir
+           $(currentDir.parent()).find('.container').each(function (index, element) {
+               $(element).remove();
+           })
+       }
+   }
+
+    function toggleUploadModal(form) {
+        const dirPath = $(form).parent().parent().find('input').val();
+        $('#formFileUploadLabel').html(
+            '<p><strong>Upload file to directory:</strong></p>' +
+            '<input id="dirPathInput" type="text" class="form-control" aria-describedby="inputGroup-sizing-sm" value="' + dirPath +'">');
+        $("#dirPathInput").val(dirPath);
+        $('#uploadModal').modal('toggle');
+    }
+
+    function uploadFile() {
+        let xHttpRequest = new XMLHttpRequest();
+        xHttpRequest.onreadystatechange = function (e) {
+            if (this.readyState === 4) {
+                if (xHttpRequest.status === 200) {
+                    $('#uploadModal').modal('hide');
+                } else {
+					alert(xHttpRequest.responseText);
+				}
+            }
+        };
+
+        let dirFullPath = $("#dirPathInput").val();
+        let file = document.getElementById("formFileUpload").files[0];
+		let uri = '/admin/upload/file' + dirFullPath + '/' + file.name;
+        xHttpRequest.open('POST', uri, true);
+        xHttpRequest.setRequestHeader('X-FileName',file.name); // Pass the filename along
+        xHttpRequest.send(file);
+    }
+
+   function downloadFile(form) {
+       let fileFullName = $(form).parent().parent().find('input').val();
+        window.location.href = '/file' + fileFullName;
+        return false; // prevent default
+   }
+
+   function deleteFile(form) {
+       let fileFullName = $(form).parent().parent().find('input').val();
+	   $.post("/admin/esp/delete/file?filePath=" + fileFullName, function (data) {
+            alert('File deleted: ' + fileFullName);
+			const fileDir = $(form).parent().parent().parent().find('a').first();
+			handleDir(fileDir);	// collapse dir first
+			handleDir(fileDir);	// then expand dir to get updated content
+        });
+   }
+   
+   function dirAndFileSort(a, b) {
+		// Directories ("dir") come first
+		if (a.type === "dir" && b.type !== "dir") {
+			return -1;
+		}
+		if (a.type !== "dir" && b.type === "dir") {
+			return 1;
+		}
+		// For non-directory types or if both are directories, maintain the original order
+		return 0;
+    }
+
+    function fileTypeToIconClass(filePath) {
+        const fileExtension = filePath.substring(filePath.lastIndexOf('.') + 1);
+		
+        if (fileExtension === 'txt') {
+            return 'bi-file-text';
+
+        } else if (fileExtension === 'zip' || fileExtension === 'tar') {
+            return 'bi-file-zip';
+
+        } else if (fileExtension === 'jpeg' || fileExtension === 'jpg' || fileExtension === 'svg' || fileExtension === 'ico' || fileExtension === 'png') {
+            return 'bi-image';
+
+        } else if (fileExtension === 'properties') {
+            return 'bi-file-earmark-bar-graph';
+
+        } else if (fileExtension === 'csp' || fileExtension === 'html') {
+            return 'bi-filetype-html';
+
+        } else if (fileExtension === 'css' || fileExtension === 'scss') {
+            return 'bi-filetype-css';
+
+        } else if (fileExtension === 'woff' || fileExtension === 'woff2') {
+            return 'bi-filetype-woff';
+
+        } else if (fileExtension === 'csv') {
+            return 'bi-filetype-csv';
+
+        } else if (fileExtension === 'js') {
+            return 'bi-filetype-js';
+
+        } else if (fileExtension === 'db') {
+            return 'bi-database';
+
+        } else if (fileExtension === 'log') {
+            return 'bi-journal-text';
+
+        } else if (fileExtension === 'json') {
+            return 'bi-filetype-json';
+        }
+
+        return 'bi-file-earmark';
     }
 
 </script>

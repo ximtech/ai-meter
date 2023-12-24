@@ -39,7 +39,7 @@ Properties *loadProperties(Properties *properties, const char *fileName) {
         return properties;
     }
 
-    File *propertyFile = NEW_FILE(fileName);
+    File *propertyFile = newFile(&properties->file, fileName);
     if (!isFileExists(propertyFile)) {
         properties->status = CONFIG_PROP_ERROR_FILE_NOT_FOUND;
         return properties;
@@ -105,7 +105,7 @@ void storeProperties(Properties *properties, const char *fileName) {
         return;
     }
 
-    File *propertyFile = NEW_FILE(fileName);
+    File *propertyFile = newFile(&properties->file, fileName);
     if (propertyFile == NULL || !createFile(propertyFile)) {
         properties->status = CONFIG_PROP_ERROR_CREATE_FILE;
         return;
@@ -126,7 +126,6 @@ void storeProperties(Properties *properties, const char *fileName) {
 
         fprintf(propertyFile->file, "%s=%s\n", iterator.key, (char *) iterator.value);
     }
-
     fclose(propertyFile->file);
 }
 
@@ -268,7 +267,7 @@ static char *resolveMultiline(char *textLine) {
         uint32_t targetLength = 0;
         char *target = textPointer + separatorLength;  // Skip multiline separator
         char charToRemove = *target;
-        while (charToRemove != '\0' && isspace(charToRemove)) { // skip whitespaces
+        while (charToRemove != '\0' && isspace((int) charToRemove)) { // skip whitespaces
             targetLength++;
             charToRemove = target[targetLength];
         }

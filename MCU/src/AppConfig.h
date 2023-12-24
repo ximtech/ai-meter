@@ -5,14 +5,10 @@
 #define DEFAULT_LOG_LEVEL_STR "DEBUG"
 #define DEFAULT_LOG_FILE_SIZE "1MB"
 #define DEFAULT_LOG_FILE_BACKUPS "5"
-
 #define DEFAULT_LOG_FILE_PATH SD_CARD_ROOT "/log"
 #define DEFAULT_LOG_FILE_NAME "application.log"
 #define LOGGER_MAX_SUBSCRIBERS 3
 #define LOGGER_FILE_NAME_MAX_SIZE CONFIG_FATFS_MAX_LFN
-
-#define PATH_MAX_LEN (CONFIG_FATFS_MAX_LFN + 1)    //Max length a file path can have on storage
-#define MAX_FILES_IN_DIR 256
 
 #define CONFIG_FILE             SD_CARD_ROOT "/application.properties"
 #define WLAN_CONFIG_FILE        SD_CARD_ROOT "/wlan.properties"
@@ -25,14 +21,9 @@
 #define HIDE_PASSWORD   // hide password from wlan.properties in log
 
 #define FLASH_GPIO          GPIO_NUM_4
-// #define BLINK_GPIO          GPIO_NUM_33
 #define BLINK_GPIO          GPIO_NUM_0
 #define CONFIG_START_GPIO   GPIO_NUM_0
 
-#define DEFAULT_TIME_ZONE "UTC"
-
-#define MAX_FILE_SIZE "8 MB" // Max size of an individual file. Make sure this value is the same as that set in upload_script.html and ota_page.html!
-#define MAX_PHOTOS_IN_DIR 128
 #define OLDEST_PHOTOS_TO_REMOVE_COUNT 16
 
 // Soft AP default config
@@ -61,11 +52,16 @@
 #define CSP_MESSAGE_CAPTION_NAME "message_caption.csp"
 
 // Properties keys from application.properties
+// System properties keys
+#define PROPERTY_SYSTEM_FREQUENCY_MHZ_KEY "system.cpu.frequency.mhz"
+
+// Geo IP service keys
 #define PROPERTY_IP_GEOLOCATION_ENABLED_KEY "ip.geolocation.enabled"
 #define PROPERTY_IP_GEOLOCATION_URL_KEY "ip.geolocation.url"
 #define PROPERTY_IP_GEOLOCATION_TIMEZONE_FORMAT_URL_KEY "ip.geolocation.timezone.format.url"
 #define PROPERTY_IP_GEOLOCATION_API_KEY "ip.geolocation.api.key"
 
+// Telegram keys
 #define PROPERTY_TELEGRAM_API_BOT_NAME_KEY "telegram.api.bot.name"
 #define PROPERTY_TELEGRAM_API_URL_KEY "telegram.api.bot.url"
 #define PROPERTY_TELEGRAM_API_KEY "telegram.api.bot.api.key"
@@ -76,6 +72,8 @@
 #define PROPERTY_LOG_FILE_NAME_KEY "logging.file.name"
 #define PROPERTY_LOG_FILE_ENABLED_KEY "logging.file.enabled"
 #define PROPERTY_LOG_CONSOLE_ENABLED_KEY "logging.console.enabled"
+#define PROPERTY_LOG_FILE_MAX_SIZE_KEY "logging.file.max.size"
+#define PROPERTY_LOG_FILE_MAX_BACKUPS_KEY "logging.file.max.backups"
 
 // Properties keys from wlan.properties
 #define METER_NAME_PREFIX "AI-Meter-"
@@ -123,7 +121,6 @@ extern sqlite3 *embeddedDb;
 
 #define SERVER_FILE_SCRATCH_BUFFER_SIZE (32 * ONE_KB)
 #define DATE_TIME_FORMAT_ZONE_STR "yyyy-MM-dd HH:mm:ss ZZZZZ"
-#define DATE_TIME_FORMAT_WITHOUT_ZONE_STR "yyyy-MM-dd HH:mm:ss"
 #define DATE_TIME_FORMAT_SHORT "yyyy.MM.dd HH:mm"
 #define DATE_TIME_FILE_NAME_FORMAT "yyyy_MM_dd_HH_mm"
 #define CRON_JOB_ALLOWED_MINUTES_GAP 5
@@ -250,7 +247,7 @@ extern sqlite3 *embeddedDb;
 #define LEDC_CHANNEL            LEDC_CHANNEL_1
 #define LEDC_DUTY_RES           LEDC_TIMER_13_BIT // Set duty resolution to 13 bits
 
-#define LEDC_MAX_DUTY           (8191 / 10)  // Max duty 8191, then divide by 10 for lowest intensity
+#define LEDC_MAX_DUTY           (8191 / 10)  // Max duty 8191, then divide by 10 for the lowest intensity
 #define LEDC_DEFAULT_DUTY       (LEDC_MAX_DUTY / 2) // Set duty to 50%. If max: ((2 ** 13) - 1) * 50% = 4095
 #define LEDC_FREQUENCY          (5000) // Frequency in Hertz. Set frequency at 5 kHz
 #define LED_RANGE_LEVEL_COUNT   (24)
@@ -259,7 +256,7 @@ extern sqlite3 *embeddedDb;
     X(0) X(1) X(2) X(3) X(4) X(5) X(6) X(7) X(8) X(9) X(10) X(11) X(12) \
     X(13) X(14) X(15) X(16) X(17) X(18) X(19) X(20) X(21) X(22) X(23) X(24)
 
-#define BATTERY_ADC_CHANNEL ADC_CHANNEL_6      // GPIO14 -> HS2_CLK, will be used one on app startup
+#define BATTERY_ADC_CHANNEL ADC_CHANNEL_6      // GPIO14 -> HS2_CLK will be used one on app startup
 #define BATTERY_GPIO_PIN    GPIO_NUM_14
 
 extern void configureButtonWakeup();

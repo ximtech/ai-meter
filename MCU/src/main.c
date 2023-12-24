@@ -116,7 +116,7 @@ void app_main() {
 
     Properties *properties = loadProperties(&appConfig, CONFIG_FILE);
     if (properties->status != CONFIG_PROP_OK) {
-        LOG_ERROR(TAG, "Filed to load apllication properties [%s]. Message: [%s]", CONFIG_FILE, propStatusToString(properties->status));
+        LOG_ERROR(TAG, "Filed to load aplication properties [%s]. Message: [%s]", CONFIG_FILE, propStatusToString(properties->status));
         statusLed(CONFIG_PROP_ERROR, properties->status, true);
         return; // mandatory application properties
     }
@@ -143,9 +143,9 @@ void app_main() {
             level = stringToLogLevel(DEFAULT_LOG_LEVEL_STR);
         }
 
-        char *logFileSizeStr = getPropertyOrDefault(&appConfig, "logging.file.max.size", DEFAULT_LOG_FILE_SIZE);
+        char *logFileSizeStr = getPropertyOrDefault(&appConfig, PROPERTY_LOG_FILE_MAX_SIZE_KEY, DEFAULT_LOG_FILE_SIZE);
         uint32_t logFileMaxSize = (uint32_t) displaySizeToBytes(logFileSizeStr);
-        uint8_t maxBackupFiles = strtol(getPropertyOrDefault(&appConfig, "logging.file.max.backups", DEFAULT_LOG_FILE_BACKUPS), NULL, 10);
+        uint8_t maxBackupFiles = strtol(getPropertyOrDefault(&appConfig, PROPERTY_LOG_FILE_MAX_BACKUPS_KEY, DEFAULT_LOG_FILE_BACKUPS), NULL, 10);
         LoggerEvent *fileLogger = subscribeFileLogger(level, logFile->path, logFileMaxSize, maxBackupFiles);  // Register file logger
         if (!fileLogger->isSubscribed) {
             LOG_FATAL(TAG, "File logger init error: [%s]", fileLogger->buffer);
@@ -157,7 +157,7 @@ void app_main() {
         if (!isConsoleLogEnabled) {
             LOG_INFO(TAG, "At this point console log will be disabled");
             esp_log_level_set("*", ESP_LOG_NONE);
-            loggerUnsubscribe(consoleLogger);     // Console logger not need anymore, all logs will be stored in a log file
+            loggerUnsubscribe(consoleLogger);     // Console logger doesn't need it anymore, all logs will be stored in a log file
         }
         LOG_INFO(TAG, "\nLog file directory: [%s]\n "
                     "File logger level: [%s]\n "
@@ -445,7 +445,7 @@ static void executeCronJob() {
 
         CspObjectMap *params = newCspParamObjMap(8);
         cspAddStrToMap(params, "meterName", getProperty(&wlanConfig, PROPERTY_METER_NAME_KEY));
-        cspAddStrToMap(params, "meterReadings", "N/A");
+        cspAddStrToMap(params, "meterReadings", NULL);
         cspAddIntToMap(params, "battery", batteryPercentage);
         cspAddStrToMap(params, "date", zonedDateTimeToStrByFormat(&zdtNow, DATE_TIME_FORMAT_SHORT));
 
@@ -455,23 +455,28 @@ static void executeCronJob() {
 
         deleteCspRenderer(renderer);
         deleteCspTemplate(messageTemplate);
+
+        // End time should be over max gap, its guarantee that photo will not be sent twice or more when a device powered just in a time gap, or wakeup seconds calculated incorrectly
+        ZonedDateTime *jobEndDateTime = zonedDateTimePlusMinutes(after, 1);
+        putProperty(&wlanConfig, PROPERTY_PREVIOUS_CRON_DATE_KEY, zonedDateTimeToStrByFormat(jobEndDateTime, DATE_TIME_FORMAT_SHORT));
+        storeProperties(&wlanConfig, WLAN_CONFIG_FILE);
+        LOG_INFO(TAG, "Cron job finished");
+        return;
     }
 
-    LOG_INFO(TAG, "Cron job finished");
-    // End time should be over max gap, its guarantee that photo will not be sent twice or more when a device powered just in a time gap, or wakeup seconds calculated incorrectly
-    ZonedDateTime *jobEndDateTime = zonedDateTimePlusMinutes(&Z_DATE_TIME_COPY(zdtNow), CRON_JOB_ALLOWED_MINUTES_GAP + 1);
-    putProperty(&wlanConfig, PROPERTY_PREVIOUS_CRON_DATE_KEY, zonedDateTimeToStrByFormat(jobEndDateTime, DATE_TIME_FORMAT_SHORT));
+    putProperty(&wlanConfig, PROPERTY_PREVIOUS_CRON_DATE_KEY, zonedDateTimeToStrByFormat(&zdtNow, DATE_TIME_FORMAT_SHORT));
     storeProperties(&wlanConfig, WLAN_CONFIG_FILE);
+    LOG_INFO(TAG, "Cron end");
 }
 
 static void cleanupPhotoDirectory() {
-    File *fileBuffer = callocPsramHeap(MAX_PHOTOS_IN_DIR + 1, sizeof(struct File));
-    fileVector *photoVec = NEW_VECTOR_BUFF(File, file, fileBuffer, MAX_PHOTOS_IN_DIR + 1);
+    File *fileBuffer = callocPsramHeap(MAX_FILES_IN_DIR + 1, sizeof(struct File));
+    fileVector *photoVec = NEW_VECTOR_BUFF(File, file, fileBuffer, MAX_FILES_IN_DIR + 1);
     listFiles(&imageDirRoot, photoVec, false);
 
     LOG_INFO(TAG, "Total photos in dir: [%d]", fileVecSize(photoVec));
-    if (fileVecSize(photoVec) >= MAX_PHOTOS_IN_DIR) {
-        LOG_INFO(TAG, "Collected photos more than: %d. Removing oldest %d photos", MAX_PHOTOS_IN_DIR, OLDEST_PHOTOS_TO_REMOVE_COUNT);
+    if (fileVecSize(photoVec) >= MAX_FILES_IN_DIR) {
+        LOG_INFO(TAG, "Collected photos more than: %d. Removing oldest %d photos", MAX_FILES_IN_DIR, OLDEST_PHOTOS_TO_REMOVE_COUNT);
         parseDateTimePattern(&photoFileDateTimeFormatter, DATE_TIME_FILE_NAME_FORMAT);
         qsort(photoVec->items, fileVecSize(photoVec), sizeof(File), fileDateCompareFunction);   // sort by photo date time from it name, first will be the oldest one
 

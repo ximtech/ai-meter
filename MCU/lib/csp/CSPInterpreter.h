@@ -36,7 +36,7 @@ static inline bool cspAddFloatToMap(CspObjectMap *mapObj, const char *key, CSP_F
 }
 
 static inline bool cspAddStrToMap(CspObjectMap *mapObj, const char *key, char *value) {
-    return mapObj != NULL ? cspMapPut(mapObj->map, key, CSP_STR_VALUE(value)) : false;
+    return mapObj != NULL ? cspMapPut(mapObj->map, key, value != NULL ? CSP_STR_VALUE(value) : CSP_NULL_VALUE()) : false;
 }
 
 static inline bool cspAddValToMap(CspObjectMap *mapObj, const char *key, CspValue value) {
@@ -67,7 +67,7 @@ static inline bool cspAddFloatToArray(CspObjectArray *arrayObj, CSP_FLOAT_TYPE v
 }
 
 static inline bool cspAddStrToArray(CspObjectArray *arrayObj, const char *value) {
-    return arrayObj != NULL ? cspValVecAdd(arrayObj->vec, CSP_STR_VALUE(value)) : false;
+    return arrayObj != NULL ? cspValVecAdd(arrayObj->vec, value != NULL ? CSP_STR_VALUE(value) : CSP_NULL_VALUE()) : false;
 }
 
 static inline bool cspAddValToArray(CspObjectArray *arrayObj, CspValue value) {

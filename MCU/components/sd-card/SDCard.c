@@ -52,7 +52,7 @@ SDCardStatus initNvsSDCard() {
     // formatted in case when mounting fails.
     esp_vfs_fat_sdmmc_mount_config_t mount_config = {
             .format_if_mount_failed = false,
-            .max_files = 15,
+            .max_files = MAX_FILES_IN_DIR,
             .allocation_unit_size = 16 * ONE_KB};
 
     LOG_INFO(TAG, "Initializing SD card with root: [%s]", SD_CARD_ROOT);

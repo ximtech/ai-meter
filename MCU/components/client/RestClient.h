@@ -6,7 +6,7 @@
 #include "esp_tls.h"
 #include "esp_random.h"
 
-#define MAX_HTTP_OUTPUT_BUFFER 4 * ONE_KB
+#define MAX_HTTP_OUTPUT_BUFFER (4 * ONE_KB)
 
 extern esp_http_client_handle_t restClient;
 extern char *httpResponseBuffer;

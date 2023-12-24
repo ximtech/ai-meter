@@ -11,12 +11,16 @@
 
 #define NULL_VAL_ERROR_MESSAGE(name) "Mandatory field '" #name "' can't be NULL"
 
-#define ASSERT(expr, msg) \
+#define ASSERT(expr, httpRequest, msg) \
        if (!(expr)) {    \
-           httpd_resp_send_err(request, HTTPD_400_BAD_REQUEST, msg); \
-           LOG_ERROR(TAG, "%s", msg);   \
+           httpd_resp_send_err((request), (httpRequest), (msg)); \
+           LOG_ERROR(TAG, "%s", (msg));   \
            return ESP_FAIL; \
-       }                 \
+       }
+
+#define ASSERT_400(expr, msg) ASSERT(expr, HTTPD_400_BAD_REQUEST, msg)
+#define ASSERT_404(expr, msg) ASSERT(expr, HTTPD_404_NOT_FOUND, msg)
+#define ASSERT_500(expr, msg) ASSERT(expr, HTTPD_500_INTERNAL_SERVER_ERROR, msg)
 
 #define ASSERT_JSON_VAL(jsonObj, name) \
         if (!isJsonObjectOk((jsonObj))) {    \
@@ -26,11 +30,8 @@
            return ESP_FAIL; \
        }
 
-#define ASSERT_NOT_NULL(value, name) \
-        ASSERT((value) != NULL, NULL_VAL_ERROR_MESSAGE(name)) \
-
-#define ASSERT_ESP_OK(value, msg) \
-        ASSERT((value) == ESP_OK, msg) \
+#define ASSERT_NOT_NULL(value, name) ASSERT_400((value) != NULL, NULL_VAL_ERROR_MESSAGE(name))
+#define ASSERT_ESP_OK(value, msg) ASSERT_400((value) == ESP_OK, msg) \
 
 #define REQUEST_TO_JSON(request) requestBodyToJson(request, &(JSONObject){0})
 
@@ -47,3 +48,5 @@ void logTemplate(CspTemplate *templ, const char *name);
 esp_err_t renderHtmlTemplate(httpd_req_t *request, CspTemplate *templ, CspObjectMap *paramMap);
 
 esp_err_t handleErrorPage(httpd_req_t *request, httpd_err_code_t error);
+
+char *getScratchBufferPointer();

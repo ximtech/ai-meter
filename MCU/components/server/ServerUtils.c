@@ -2,8 +2,7 @@
 
 static const char *TAG = "SERVER";
 
-static char scratch[SERVER_FILE_SCRATCH_BUFFER_SIZE];
-
+static char scratchBuffer[SERVER_FILE_SCRATCH_BUFFER_SIZE];
 CspTemplate *notFoundPage;
 
 static esp_err_t setContentTypeByFileExtension(httpd_req_t *request, const char *fileName);
@@ -18,7 +17,7 @@ esp_err_t sendFile(httpd_req_t *request, const char *fileName) {
     }
 
     LOG_DEBUG(TAG, "Sending file: %s", fileName);
-    // For all files from asset directory tell the webbrowser to cache them for all time
+    // For all files from asset directory tell the browser to cache them for all time
     if (strstr(fileName, "assets")) {
         httpd_resp_set_hdr(request, "Cache-Control", "max-age=31536000");
     }
@@ -27,30 +26,26 @@ esp_err_t sendFile(httpd_req_t *request, const char *fileName) {
 
     // Retrieve the pointer to scratch buffer for temporary storage
     FILE *fd = fopen(file->path, "r");
-    if (fd == NULL) {
-        LOG_ERROR(TAG, "File not found: [%s]", fileName);
-        return ESP_FAIL;
-    }
+    ASSERT_404(fd != NULL, "File not found")
 
-    char *chunk = scratch;
-    size_t chunksize;
+    char *chunk = scratchBuffer;
+    size_t chunkSize;
     do {
-        // Read file in chunks into the scratch buffer
-        chunksize = fread(chunk, 1, SERVER_FILE_SCRATCH_BUFFER_SIZE, fd);
+        // Read file in chunks into the scratchBuffer buffer
+        chunkSize = fread(chunk, 1, SERVER_FILE_SCRATCH_BUFFER_SIZE, fd);
 
         /* Send the buffer contents as HTTP response chunk */
-        if (httpd_resp_send_chunk(request, chunk, (ssize_t) chunksize) != ESP_OK) {
+        if (httpd_resp_send_chunk(request, chunk, (ssize_t) chunkSize) != ESP_OK) {
             fclose(fd);
             LOG_ERROR(TAG, "File sending failed!");
             // Abort sending file
             httpd_resp_sendstr_chunk(request, NULL);
             // Respond with 500 Internal Server Error
-            httpd_resp_send_err(request, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to send file");
-            return ESP_FAIL;
+            ASSERT_500(false, "Failed to send file")
         }
 
     // Keep looping till the whole file is sent
-    } while (chunksize != 0);
+    } while (chunkSize != 0);
 
     // Respond with an empty chunk to signal HTTP response completion
     httpd_resp_send_chunk(request, NULL, 0);
@@ -79,12 +74,12 @@ esp_err_t getRequestBody(httpd_req_t *request, char *buffer, uint32_t length) {
 }
 
 JSONObject *requestBodyToJson(httpd_req_t *request, JSONObject *resultObject) {
-    esp_err_t status = getRequestBody(request, scratch, sizeof(scratch));
+    esp_err_t status = getRequestBody(request, scratchBuffer, sizeof(scratchBuffer));
     if (status != ESP_OK) {
         return NULL;
     }
 
-    JSONTokener jsonTokener = getJSONTokener(scratch, strlen(scratch));
+    JSONTokener jsonTokener = getJSONTokener(scratchBuffer, strlen(scratchBuffer));
     JSONObject rootObject = jsonObjectParse(&jsonTokener);
     if (!isJsonObjectOk(&rootObject)) {
         BufferString *message = STRING_FORMAT_64("JSON is not valid. Error code: [%d]", rootObject.jsonTokener->jsonStatus);
@@ -111,7 +106,6 @@ esp_err_t renderHtmlTemplate(httpd_req_t *request, CspTemplate *templ, CspObject
     httpd_resp_send(request, str->value, (int) str->length);
     httpd_resp_set_hdr(request, "Access-Control-Allow-Origin", "*");
     deleteCspRenderer(renderer);
-    // deleteCspParams(paramMap);
     return ESP_OK;
 }
 
@@ -122,6 +116,10 @@ esp_err_t handleErrorPage(httpd_req_t *request, httpd_err_code_t error) {
         return ESP_OK;
     }
     return ESP_ERR_NOT_FOUND;
+}
+
+char *getScratchBufferPointer() {
+    return scratchBuffer;
 }
 
 static esp_err_t setContentTypeByFileExtension(httpd_req_t *request, const char *fileName) {

@@ -3,7 +3,6 @@
 #define DEFAULT_SCAN_LIST_SIZE 20
 #define PIN_NUMBER_LOWER_LIMIT 1000
 #define PIN_NUMBER_UPPER_LIMIT 9999
-#define MAX_LOG_FILES_COUNT 32
 
 static const char *TAG = "SOFT_AP";
 
@@ -35,12 +34,16 @@ static esp_err_t adminConfigPropertiesAjaxHandler(httpd_req_t *request);
 static esp_err_t adminUpdatePropertyAjaxHandler(httpd_req_t *request);
 static esp_err_t adminRemovePropertyAjaxHandler(httpd_req_t *request);
 static esp_err_t adminGetLogContentsAjaxHandler(httpd_req_t *request);
-static esp_err_t adminDeleteLogFileAjaxHandler(httpd_req_t *request);
+static esp_err_t adminCleanLogFileAjaxHandler(httpd_req_t *request);
+static esp_err_t adminDirectoryContentsAjaxHandler(httpd_req_t *request);
+static esp_err_t deleteFileAjaxHandler(httpd_req_t *request);
+static esp_err_t uploadFileAjaxHandler(httpd_req_t *request);
 static esp_err_t restartEspAjaxHandler(httpd_req_t *request);
 
 static CspObjectArray *mapApRecordsToList(wifi_ap_record_t *apRecords, uint16_t length);
-int apRecordComparator(const void *v1, const void *v2);
+static int apRecordComparator(const void *v1, const void *v2);
 static Properties *getPropertiesByFileName(const char *configFileName);
+static int propertyEntryKeyCompareFun(const void *one, const void *two);
 
 
 httpd_handle_t startWebServerAP() {
@@ -216,9 +219,30 @@ httpd_handle_t startWebServerAP() {
     httpd_uri_t logFileDeleteUri = {
             .uri = "/admin/remove/log",
             .method = HTTP_POST,
-            .handler = adminDeleteLogFileAjaxHandler,
+            .handler = adminCleanLogFileAjaxHandler,
             .user_ctx = NULL};
     httpd_register_uri_handler(server, &logFileDeleteUri);
+
+    httpd_uri_t dirContentUri = {
+            .uri = "/admin/fs/dir/content",
+            .method = HTTP_GET,
+            .handler = adminDirectoryContentsAjaxHandler,
+            .user_ctx = NULL};
+    httpd_register_uri_handler(server, &dirContentUri);
+
+    httpd_uri_t deleteFileUri = {
+            .uri = "/admin/esp/delete/file",
+            .method = HTTP_POST,
+            .handler = deleteFileAjaxHandler,
+            .user_ctx = NULL};
+    httpd_register_uri_handler(server, &deleteFileUri);
+
+    httpd_uri_t uploadFileUri = {
+            .uri = "/admin/upload/file/*",
+            .method = HTTP_POST,
+            .handler = uploadFileAjaxHandler,
+            .user_ctx = NULL};
+    httpd_register_uri_handler(server, &uploadFileUri);
 
     httpd_uri_t restartEspUri = {
             .uri = "/admin/esp/restart",
@@ -241,6 +265,13 @@ httpd_handle_t startWebServerAP() {
             .user_ctx = NULL};
     httpd_register_uri_handler(server, &cameraResourcesUri);
 
+    httpd_uri_t fileSystemResourcesUri = {
+            .uri = "/file/*",
+            .method = HTTP_GET,
+            .handler = handleFileResources,
+            .user_ctx = NULL};
+    httpd_register_uri_handler(server, &fileSystemResourcesUri);
+
     httpd_uri_t faviconUri = {
             .uri = "/favicon.ico",
             .method = HTTP_GET,
@@ -253,31 +284,40 @@ httpd_handle_t startWebServerAP() {
 }
 
 esp_err_t handleFavicon(httpd_req_t *request) {
-    esp_err_t status = sendFile(request, HTML_ASSETS_IMAGE_DIR "/favicon.ico");
-    return status != ESP_OK ? status : ESP_OK;
+    return sendFile(request, HTML_ASSETS_IMAGE_DIR "/favicon.ico");
 }
 
-// FIXME: Code duplication, create one hadler for all files
 esp_err_t handleHtmlResources(httpd_req_t *request) {
     LOG_DEBUG(TAG, "URI: [%s]", request->uri);
-    BufferString *filePath = NEW_STRING_128(HTML_TEMPLATE_DIR);
+    BufferString *filePath = NEW_STRING(PATH_MAX_LEN, HTML_TEMPLATE_DIR);
     concatChars(filePath, request->uri);
 
     int32_t paramIndex = lastIndexOfString(filePath, "?");
     if (paramIndex != -1) { // have additional param value, need to remove it
-        filePath = SUBSTRING(128, filePath, 0, paramIndex);
+        filePath = SUBSTRING(PATH_MAX_LEN, filePath, 0, paramIndex);
     }
     return sendFile(request, filePath->value);
 }
 
 esp_err_t handlePhotoResources(httpd_req_t *request) {
     LOG_DEBUG(TAG, "URI: [%s]", request->uri);
-    BufferString *filePath = NEW_STRING_128(SD_CARD_ROOT);
+    BufferString *filePath = NEW_STRING(PATH_MAX_LEN, SD_CARD_ROOT);
     concatChars(filePath, request->uri);
 
     int32_t paramIndex = lastIndexOfString(filePath, "?");
     if (paramIndex != -1) { // have additional param value, need to remove it
-        filePath = SUBSTRING(128, filePath, 0, paramIndex);
+        filePath = SUBSTRING(PATH_MAX_LEN, filePath, 0, paramIndex);
+    }
+    return sendFile(request, filePath->value);
+}
+
+esp_err_t handleFileResources(httpd_req_t *request) {
+    LOG_DEBUG(TAG, "URI: [%s]", request->uri);
+    BufferString *filePath = SUBSTRING_AFTER(PATH_MAX_LEN, NEW_STRING(HTTPD_MAX_URI_LEN, request->uri), "/file");
+
+    int32_t paramIndex = lastIndexOfString(filePath, "?");
+    if (paramIndex != -1) { // have additional param value, need to remove it
+        filePath = SUBSTRING(PATH_MAX_LEN, filePath, 0, paramIndex);
     }
     return sendFile(request, filePath->value);
 }
@@ -322,7 +362,7 @@ static esp_err_t connectPageHandler(httpd_req_t *request) {
     wifi_ap_record_t apRecords[DEFAULT_SCAN_LIST_SIZE] = {0};
     uint16_t apCount = scanWifiAccessPoints(apRecords, DEFAULT_SCAN_LIST_SIZE);
 
-    CspObjectMap *paramMap = newCspParamObjMap(8);
+    CspObjectMap *paramMap = newCspParamObjMap(16);
     CspObjectArray *apRecordList = mapApRecordsToList(apRecords, apCount);
     cspAddVecToMap(apRecordList, paramMap, "apRecords");
     return renderHtmlTemplate(request, connectPage, paramMap);
@@ -346,7 +386,7 @@ static esp_err_t calibratePageHandler(httpd_req_t *request) {
 
     initCamera();
     uint32_t size = cameraCaptureToFile(CALIBRATION_PHOTO_NAME);
-    ASSERT(size > 0, "Error while taking meter photo")
+    ASSERT_400(size > 0, "Error while taking meter photo")
 
     CspObjectMap *paramMap = newCspParamObjMap(8);
     cspAddStrToMap(paramMap, "calibrationPhotoUrl", "/photo/" CALIBRATION_PHOTO_NAME);
@@ -434,9 +474,11 @@ static esp_err_t adminPageHandler(httpd_req_t *request) {
     cspAddStrToArray(configs, getFileName(wlanConfigFile, EMPTY_STRING(64))->value);
 
     char *logFilePath = getPropertyOrDefault(&appConfig, PROPERTY_LOG_FILE_PATH_KEY, DEFAULT_LOG_FILE_PATH);
+    uint8_t maxBackupFiles = strtol(getPropertyOrDefault(&appConfig, PROPERTY_LOG_FILE_MAX_BACKUPS_KEY, DEFAULT_LOG_FILE_BACKUPS), NULL, 10);
+
     File *logDir = NEW_FILE(logFilePath);
-    File *fileBuffer = malloc(sizeof(struct File) * MAX_LOG_FILES_COUNT);
-    fileVector *logVec = NEW_VECTOR_BUFF(File, file, fileBuffer, MAX_LOG_FILES_COUNT);
+    File *fileBuffer = mallocPsramHeap(sizeof(struct File) * maxBackupFiles);
+    fileVector *logVec = NEW_VECTOR_BUFF(File, file, fileBuffer, maxBackupFiles);
     LOG_INFO(TAG, "Searching in dir: [%s]", logFilePath);
     listFiles(logDir, logVec, false);
     LOG_INFO(TAG, "Found log files: [%d]", fileVecSize(logVec));
@@ -451,16 +493,21 @@ static esp_err_t adminPageHandler(httpd_req_t *request) {
         }
     }
 
-    free(fileBuffer);
     cspAddVecToMap(configs, paramMap, "configs");
     cspAddVecToMap(logFiles, paramMap, "logs");
+    cspAddStrToMap(paramMap, "fsRootDirName", SUBSTRING_CSTR_AFTER(32, SD_CARD_ROOT, "/")->value);
+    cspAddStrToMap(paramMap, "gitBranch", (char *) GIT_BRANCH);
+    cspAddStrToMap(paramMap, "gitTag", (char *) GIT_TAG);
+    cspAddStrToMap(paramMap, "gitRevision", (char *) GIT_REV);
+    cspAddStrToMap(paramMap, "buildTime", (char *) BUILD_TIME);
+    freePsramHeap(fileBuffer);
     return renderHtmlTemplate(request, adminPage, paramMap);
 }
 
 static esp_err_t saveNameAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In save name handler");
     JSONObject *rootObject = REQUEST_TO_JSON(request);
-    ASSERT(rootObject != NULL, "Invalid json");
+    ASSERT_400(rootObject != NULL, "Invalid json");
 
     char *meterName = trimString(getJsonObjectString(rootObject, "name"));
     ASSERT_JSON_VAL(rootObject, "name")
@@ -478,7 +525,7 @@ static esp_err_t saveNameAjaxHandler(httpd_req_t *request) {
 static esp_err_t saveWifiCredentialsAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In connect Ajax handler");
     JSONObject *rootObject = REQUEST_TO_JSON(request);
-    ASSERT(rootObject != NULL, "Invalid json");
+    ASSERT_400(rootObject != NULL, "Invalid json");
 
     char *ssid = getJsonObjectString(rootObject, "ssid");
     ASSERT_JSON_VAL(rootObject, "ssid");
@@ -500,10 +547,9 @@ static esp_err_t saveWifiCredentialsAjaxHandler(httpd_req_t *request) {
     if (!isWifiHasConnection()) {
         esp_err_t status = wifiInitSta(&wlanConfig);
         if (status != ESP_OK) {
-            httpd_resp_send_err(request, HTTPD_400_BAD_REQUEST, "Connection to wifi failed");
-            LOG_INFO(TAG, "Connection to SSID: %s failed", ssid);
             deleteJSONObject(rootObject);
-            return status;
+            BufferString *message = STRING_FORMAT(128, "Connection to SSID: %s failed", ssid);
+            ASSERT_400(false, message->value)
         }
     }
     vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -552,8 +598,6 @@ static esp_err_t saveWifiCredentialsAjaxHandler(httpd_req_t *request) {
                     timeZone.utcOffset = zdateTime.zone.utcOffset;
                     timeZone.names = zdateTime.zone.names;
                     LOG_INFO(TAG, "Time zone updated. Zone id: [%s], Offset: %ds", timeZone.id, timeZone.utcOffset);
-                    setupNtpTime(); // init ntp time, at this moment the internet should be accessible
-                    loadTimezoneHistoricRules(&timeZone);
 
                 } else {
                     LOG_ERROR(TAG, "Invalid date time string received: %s", currentTime);
@@ -573,6 +617,8 @@ static esp_err_t saveWifiCredentialsAjaxHandler(httpd_req_t *request) {
         LOG_INFO(TAG, "Geo IP service disabled: [%s]", message);
     }
 
+    setupNtpTime(); // init ntp time, at this moment the internet should be accessible
+    loadTimezoneHistoricRules(&timeZone);   // load DST if time zone set
     deleteJSONObject(rootObject);
     httpd_resp_sendstr(request, "Connection success");
     return ESP_OK;
@@ -580,17 +626,17 @@ static esp_err_t saveWifiCredentialsAjaxHandler(httpd_req_t *request) {
 
 static esp_err_t imageCaptureAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In image capture Ajax handler. URI: [%s]", request->uri);
-    BufferString *uriStr = NEW_STRING_128(request->uri);
+    BufferString *uriStr = NEW_STRING(HTTPD_MAX_URI_LEN, request->uri);
     BufferString *rangeStr = SUBSTRING_AFTER(32, uriStr, "ledRange=");
     LOG_DEBUG(TAG, "Received param value: [%s]", rangeStr->value);
 
     int64_t ledLevel = 0;
-    ASSERT(stringToI64(rangeStr, &ledLevel, 10) == STR_TO_I64_SUCCESS, "Invalid flash light range value");
+    ASSERT_400(stringToI64(rangeStr, &ledLevel, 10) == STR_TO_I64_SUCCESS, "Invalid flash light range value");
     int32_t ledDuty = rangeLevelToLightDuty((uint8_t) ledLevel);
     setLedIntensity(ledDuty);
 
     uint32_t size = cameraCaptureToFile(CALIBRATION_PHOTO_NAME);
-    ASSERT(size > 0, "Error while taking meter photo");
+    ASSERT_400(size > 0, "Error while taking meter photo");
 
     putProperty(&wlanConfig, PROPERTY_FLASH_LIGHT_INTENSITY_KEY, UINT64_TO_STRING(ledDuty)->value);
     httpd_resp_sendstr(request, "/photo/" CALIBRATION_PHOTO_NAME);
@@ -600,7 +646,7 @@ static esp_err_t imageCaptureAjaxHandler(httpd_req_t *request) {
 static esp_err_t cronAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In cron save Ajax handler");
     JSONObject *rootObject = REQUEST_TO_JSON(request);
-    ASSERT(rootObject != NULL, "Invalid json");
+    ASSERT_400(rootObject != NULL, "Invalid json");
 
     char *cronStr = getJsonObjectString(rootObject, "cron");
     ASSERT_JSON_VAL(rootObject, "cron");
@@ -608,9 +654,8 @@ static esp_err_t cronAjaxHandler(httpd_req_t *request) {
 
     CronStatus cronStatus = parseCronExpression(&cron, cronStr);
     if (cronStatus != CRON_OK) {
-        httpd_resp_send_err(request, HTTPD_400_BAD_REQUEST, "Invalid cron expression");
         deleteJSONObject(rootObject);
-        return ESP_FAIL;
+        ASSERT_400(false, "Invalid cron expression")
     }
 
     putProperty(&wlanConfig, PROPERTY_SYSTEM_CRON_EXPR_KEY, cronStr);
@@ -622,7 +667,7 @@ static esp_err_t cronAjaxHandler(httpd_req_t *request) {
 static esp_err_t telegramMessageAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In telegram message Ajax handler");
     JSONObject *rootObject = REQUEST_TO_JSON(request);
-    ASSERT(rootObject != NULL, "Invalid json");
+    ASSERT_400(rootObject != NULL, "Invalid json");
 
     char *messageId = getJsonObjectString(rootObject, "message_id");
     ASSERT_JSON_VAL(rootObject, "message_id");
@@ -637,11 +682,8 @@ static esp_err_t telegramMessageAjaxHandler(httpd_req_t *request) {
         JSONTokener jsonTokener = getJSONTokener(httpResponseBuffer, responseLength);
         JSONObject responseJson = jsonObjectParse(&jsonTokener);
         if (!isJsonObjectOk(&responseJson)) {
-            char *errorMessage = "Invalid json received";
-            LOG_ERROR(TAG, "%s", errorMessage);
-            httpd_resp_send_err(request, HTTPD_500_INTERNAL_SERVER_ERROR, errorMessage);
             deleteJSONObject(&responseJson);
-            return ESP_FAIL;
+            ASSERT_500(false, "Invalid json received")
         }
 
         int chatId = -1;
@@ -660,25 +702,20 @@ static esp_err_t telegramMessageAjaxHandler(httpd_req_t *request) {
         }
 
         if (chatId == -1) {
-            char *errorMessage = "Chat id not found by provided message id";
-            LOG_ERROR(TAG, "%s", errorMessage);
-            httpd_resp_send_err(request, HTTPD_400_BAD_REQUEST, errorMessage);
             deleteJSONObject(&responseJson);
-            return ESP_FAIL;
+            ASSERT_400(false, "Chat id not found by provided message id")
         }
 
         char *meterName = getProperty(&wlanConfig, PROPERTY_METER_NAME_KEY);
         if (meterName == NULL) {
-            char *errorMessage = "Meter name is not provided. Send message aborted...";
-            LOG_ERROR(TAG, "%s", errorMessage);
-            httpd_resp_send_err(request, HTTPD_400_BAD_REQUEST, errorMessage);
             deleteJSONObject(&responseJson);
+            ASSERT_400(false, "Meter name is not provided. Send message aborted...")
         }
 
         BufferString *message = STRING_FORMAT_128("%s has been subscribed", meterName);
         status = sendTelegramMessage(message->value);
         if (status == ESP_OK) {
-            LOG_INFO(TAG, "Subscription message sended");
+            LOG_INFO(TAG, "Subscription message sent");
         }
 
         deleteJSONObject(&responseJson);
@@ -694,7 +731,7 @@ static esp_err_t telegramMessageAjaxHandler(httpd_req_t *request) {
 static esp_err_t timeZoneSearchAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In time zone search Ajax handler");
     JSONObject *rootObject = REQUEST_TO_JSON(request);
-    ASSERT(rootObject != NULL, "Invalid json");
+    ASSERT_400(rootObject != NULL, "Invalid json");
 
     char *zoneName = trimString(getJsonObjectString(rootObject, "zoneName"));
     ASSERT_JSON_VAL(rootObject, "zoneName");
@@ -734,7 +771,7 @@ static esp_err_t timeZoneSearchAjaxHandler(httpd_req_t *request) {
 static esp_err_t timeZoneSaveAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In time zone save Ajax handler");
     JSONObject *rootObject = REQUEST_TO_JSON(request);
-    ASSERT(rootObject != NULL, "Invalid json");
+    ASSERT_400(rootObject != NULL, "Invalid json");
 
     char *zoneName = trimString(getJsonObjectString(rootObject, "timeZone"));
     ASSERT_JSON_VAL(rootObject, "timeZone");
@@ -746,7 +783,7 @@ static esp_err_t timeZoneSaveAjaxHandler(httpd_req_t *request) {
     bool isTimeZoneExist = rsGetInt(rs, "count") > 0;
     resultSetDelete(rs);
 
-    ASSERT(isTimeZoneExist == true, "Not existing time zone");
+    ASSERT_404(isTimeZoneExist == true, "Not existing time zone");
     putProperty(&wlanConfig, PROPERTY_APP_SYSTEM_TIMEZONE_KEY, zoneName);
 
     deleteJSONObject(rootObject);
@@ -762,12 +799,12 @@ static esp_err_t summarySaveAjaxHandler(httpd_req_t *request) {
     bool isSchedulerConfigured = getProperty(&wlanConfig, PROPERTY_SYSTEM_CRON_EXPR_KEY) != NULL;
     bool isSubscribedToBot = getProperty(&wlanConfig, PROPERTY_TELEGRAM_CHAT_ID_KEY) != NULL;
 
-    ASSERT(isMeterNameSet == true, "Meter name is not set");
-    ASSERT(isWifiHasConnection() == true, "Device is not connected to Wi-Fi");
-    ASSERT(isTimeZoneSet == true, "Time zone is not set");
-    ASSERT(isCameraCalibrated == true, "Camera is not calibrated");
-    ASSERT(isSchedulerConfigured == true, "Scheduler is not set");
-    ASSERT(isSubscribedToBot == true, "Telegram subscription is not configured");
+    ASSERT_400(isMeterNameSet == true, "Meter name is not set");
+    ASSERT_400(isWifiHasConnection() == true, "Device is not connected to Wi-Fi");
+    ASSERT_400(isTimeZoneSet == true, "Time zone is not set");
+    ASSERT_400(isCameraCalibrated == true, "Camera is not calibrated");
+    ASSERT_400(isSchedulerConfigured == true, "Scheduler is not set");
+    ASSERT_400(isSubscribedToBot == true, "Telegram subscription is not configured");
 
     ZonedDateTime zdtNow = zonedDateTimeNow(&timeZone);
     char buffer[32];
@@ -788,26 +825,24 @@ static esp_err_t summarySaveAjaxHandler(httpd_req_t *request) {
 
 static esp_err_t adminConfigPropertiesAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In admin properties Ajax handler");
-    BufferString *uriStr = NEW_STRING_128(request->uri);
+    BufferString *uriStr = NEW_STRING(HTTPD_MAX_URI_LEN, request->uri);
     BufferString *configFileName = SUBSTRING_AFTER(64, uriStr, "configFileName=");
-    ASSERT(isBuffStringNotEmpty(configFileName) == true, "Empty config file name");
+    ASSERT_400(isBuffStringNotEmpty(configFileName) == true, "Empty config file name");
     LOG_DEBUG(TAG, "Config file name: [%s]", configFileName->value);
 
-    HashMap propertyMap;
     Properties *configProp = getPropertiesByFileName(configFileName->value);
     if (configProp == NULL) {
         BufferString *message = STRING_FORMAT_64("Unknown config file [%S]", configFileName);
-        LOG_ERROR(TAG, "%s", message->value);
-        httpd_resp_send_err(request, HTTPD_404_NOT_FOUND, message->value);
-        return ESP_FAIL;
+        ASSERT_404(false, message->value)
     }
-    propertyMap = configProp->map;
+    Properties *configPropCopy = LOAD_PROPERTIES(configProp->file.path);    // create the copy of original properties
+    qsort(configPropCopy->map->entries, configPropCopy->map->capacity, sizeof(MapEntry), propertyEntryKeyCompareFun);   // sort by key name prefix
 
     // Map properties to Json
     JSONTokener jsonTokener = createEmptyJSONTokener();
     JSONObject rootObject = createJsonObject(&jsonTokener);
     JSONArray pairsArray = createJsonArray(&jsonTokener);
-    HashMapIterator iterator = getHashMapIterator(propertyMap);
+    HashMapIterator iterator = getHashMapIterator(configPropCopy->map);
     while (hashMapHasNext(&iterator)) {
         JSONObject keyValuePairObject = createJsonObject(&jsonTokener);
         jsonObjectPut(&keyValuePairObject, "key", (char *) iterator.key);
@@ -820,6 +855,7 @@ static esp_err_t adminConfigPropertiesAjaxHandler(httpd_req_t *request) {
     jsonObjectToString(&rootObject, buffer, ARRAY_SIZE(buffer));
 
     deleteJSONObject(&rootObject);
+    deleteConfigProperties(configPropCopy);
     httpd_resp_set_hdr(request, "Content-Type", "application/json");
     httpd_resp_sendstr(request, buffer);
     return ESP_OK;
@@ -828,7 +864,7 @@ static esp_err_t adminConfigPropertiesAjaxHandler(httpd_req_t *request) {
 static esp_err_t adminUpdatePropertyAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In admin update property Ajax handler");
     JSONObject *rootObject = REQUEST_TO_JSON(request);
-    ASSERT(rootObject != NULL, "Invalid json");
+    ASSERT_400(rootObject != NULL, "Invalid json");
 
     char *configFileName = trimString(getJsonObjectString(rootObject, "propertyFileName"));
     ASSERT_JSON_VAL(rootObject, "propertyFileName");
@@ -844,10 +880,8 @@ static esp_err_t adminUpdatePropertyAjaxHandler(httpd_req_t *request) {
     Properties *configProp = getPropertiesByFileName(configFileName);
     if (configProp == NULL) {
         BufferString *message = STRING_FORMAT_64("Unknown config file: [%S]", configFileName);
-        LOG_ERROR(TAG, "%s", message->value);
-        httpd_resp_send_err(request, HTTPD_404_NOT_FOUND, message->value);
         deleteJSONObject(rootObject);
-        return ESP_FAIL;
+        ASSERT_404(false, message->value)
     }
 
     putProperty(configProp, propertyKey, propertyValue);
@@ -859,7 +893,7 @@ static esp_err_t adminUpdatePropertyAjaxHandler(httpd_req_t *request) {
 static esp_err_t adminRemovePropertyAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In admin remove property Ajax handler");
     JSONObject *rootObject = REQUEST_TO_JSON(request);
-    ASSERT(rootObject != NULL, "Invalid json");
+    ASSERT_400(rootObject != NULL, "Invalid json");
 
     char *configFileName = trimString(getJsonObjectString(rootObject, "propertyFileName"));
     ASSERT_JSON_VAL(rootObject, "propertyFileName");
@@ -886,17 +920,18 @@ static esp_err_t adminRemovePropertyAjaxHandler(httpd_req_t *request) {
 
 static esp_err_t adminGetLogContentsAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In admin log content Ajax handler");
-    BufferString *uriStr = NEW_STRING_128(request->uri);
+    BufferString *uriStr = NEW_STRING(HTTPD_MAX_URI_LEN, request->uri);
     BufferString *logFileName = SUBSTRING_AFTER(64, uriStr, "logFileName=");
-    ASSERT(isBuffStringNotEmpty(logFileName) == true, "Empty log file name");
+    ASSERT_400(isBuffStringNotEmpty(logFileName) == true, "Empty log file name");
     LOG_DEBUG(TAG, "Log file name: [%s]", logFileName->value);
 
     char *logFilePath = getPropertyOrDefault(&appConfig, PROPERTY_LOG_FILE_PATH_KEY, DEFAULT_LOG_FILE_PATH);
-    File *logDir = NEW_FILE(logFilePath);
+    uint8_t maxBackupFiles = strtol(getPropertyOrDefault(&appConfig, PROPERTY_LOG_FILE_MAX_BACKUPS_KEY, DEFAULT_LOG_FILE_BACKUPS), NULL, 10);
 
-    File *fileBuffer = malloc(sizeof(struct File) * MAX_LOG_FILES_COUNT);
-    fileVector *logVec = NEW_VECTOR_BUFF(File, file, fileBuffer, MAX_LOG_FILES_COUNT);
+    File *fileBuffer = malloc(sizeof(struct File) * maxBackupFiles);
+    fileVector *logVec = NEW_VECTOR_BUFF(File, file, fileBuffer, maxBackupFiles);
     LOG_INFO(TAG, "Searching in: [%s]", logFilePath);
+    File *logDir = NEW_FILE(logFilePath);
     listFiles(logDir, logVec, false);
     LOG_INFO(TAG, "Found log files: [%d]", fileVecSize(logVec));
 
@@ -916,10 +951,10 @@ static esp_err_t adminGetLogContentsAjaxHandler(httpd_req_t *request) {
     return ESP_FAIL;
 }
 
-static esp_err_t adminDeleteLogFileAjaxHandler(httpd_req_t *request) {
+static esp_err_t adminCleanLogFileAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In admin delete log file Ajax handler");
     JSONObject *rootObject = REQUEST_TO_JSON(request);
-    ASSERT(rootObject != NULL, "Invalid json");
+    ASSERT_400(rootObject != NULL, "Invalid json");
 
     char *logFileName = trimString(getJsonObjectString(rootObject, "logFileName"));
     ASSERT_JSON_VAL(rootObject, "logFileName");
@@ -929,10 +964,117 @@ static esp_err_t adminDeleteLogFileAjaxHandler(httpd_req_t *request) {
     File *logDir = NEW_FILE(logFilePath);
     File *logFile = FILE_OF(logDir, logFileName);
     fclose(logFile->file);
-    fopen(logFile->path, "wb");
+    writeCharsToFile(logFile, "Empty", 5, false);
 
     LOG_INFO(TAG, "Log file cleared: [%s]", logFile->path);
     httpd_resp_sendstr(request, "Log file cleared");
+    return ESP_OK;
+}
+
+static esp_err_t adminDirectoryContentsAjaxHandler(httpd_req_t *request) {
+    LOG_DEBUG(TAG, "In admin directory content Ajax handler");
+    BufferString *uriStr = NEW_STRING(PATH_MAX_LEN, request->uri);
+    BufferString *dirPathStr = SUBSTRING_AFTER(PATH_MAX_LEN, uriStr, "dirPath=");
+    ASSERT_400(isBuffStringNotEmpty(dirPathStr), "Empty directory path");
+    LOG_DEBUG(TAG, "Request content for directory: [%s]", dirPathStr->value);
+
+    File *dir = NEW_FILE(dirPathStr->value);
+    ASSERT_400(isDirectory(dir), "Only existing directory is allowed")
+
+    LOG_INFO(TAG, "Searching for content in directory: [%s]", dir->path);
+    File *fileBuffer = calloc(MAX_FILES_IN_DIR + 1, sizeof(struct File));
+    fileVector *contentVec = NEW_VECTOR_BUFF(File, file, fileBuffer, MAX_FILES_IN_DIR + 1);
+    listFilesAndDirs(dir, contentVec, false);
+    LOG_INFO(TAG, "Total files and dirs fetched: [%d]", fileVecSize(contentVec));
+
+    // Map files and directories to Json
+    JSONTokener jsonTokener = createEmptyJSONTokener();
+    JSONObject rootObject = createJsonObject(&jsonTokener);
+    JSONArray contentArray = createJsonArray(&jsonTokener);
+    for (uint32_t i = 0; i < fileVecSize(contentVec); i++) {
+        File *contentItem = &contentVec->items[i];
+        JSONObject itemObject = createJsonObject(&jsonTokener);
+        jsonObjectPut(&itemObject, "type", isDirectory(contentItem) ? "dir" : "file");
+        jsonObjectPut(&itemObject, "path", contentItem->path);
+        jsonArrayAddObject(&contentArray, &itemObject);
+    }
+
+    jsonObjectAddArray(&rootObject, "content", &contentArray);
+    size_t bufferSize = (MAX_FILES_IN_DIR * PATH_MAX_LEN) + 4096;
+    char *buffer = callocPsramHeap(bufferSize, sizeof(char));
+    jsonObjectToString(&rootObject, buffer, bufferSize);
+
+    httpd_resp_set_hdr(request, "Content-Type", "application/json");
+    httpd_resp_sendstr(request, buffer);
+    deleteJSONObject(&rootObject);
+    free(fileBuffer);
+    freePsramHeap(buffer);
+    return ESP_OK;
+}
+
+static esp_err_t uploadFileAjaxHandler(httpd_req_t *request) {
+    LOG_DEBUG(TAG, "In admin upload file Ajax handler");
+    BufferString *filePathStr = SUBSTRING_CSTR_AFTER(PATH_MAX_LEN, (char *) request->uri, "/admin/upload/file");
+    ASSERT_400(isBuffStringNotEmpty(filePathStr), "Empty file save to path")
+    LOG_INFO(TAG, "File to save: [%s]", filePathStr->value);
+
+    File *uploadFile = NEW_FILE(filePathStr->value);
+    if (isFileExists(uploadFile)) {
+        LOG_INFO(TAG, "File [%s] already exist. Removing first", uploadFile->path);
+        remove(uploadFile->path);
+    }
+
+    createFileDirs(uploadFile); // create user defined dirs if present
+    createFile(uploadFile);     // create file itself
+    uploadFile->file = fopen(uploadFile->path, "w");
+    ASSERT_500(uploadFile->file != NULL, "Failed to create file");
+    LOG_INFO(TAG, "Receiving file: %s...", uploadFile->path);
+
+    char *chunk = getScratchBufferPointer();
+    size_t remainingLength = request->content_len;
+    LOG_INFO(TAG, "File remaining length: %zu", remainingLength);
+
+    while (remainingLength > 0) {
+        LOG_INFO(TAG, "Remaining length: %zu", remainingLength);
+        int receivedLength = httpd_req_recv(request, chunk, MIN(remainingLength, SERVER_FILE_SCRATCH_BUFFER_SIZE));
+        if (receivedLength <= 0) {
+            if (receivedLength == HTTPD_SOCK_ERR_TIMEOUT) {
+                continue;
+            }
+
+            fclose(uploadFile->file);
+            remove(uploadFile->path);
+            ASSERT_500(false, "File reception failed!")
+        }
+
+        size_t bytesWritten = fwrite(chunk, 1, receivedLength, uploadFile->file);
+        if (bytesWritten != receivedLength) {
+            fclose(uploadFile->file);
+            remove(uploadFile->path);
+            ASSERT_500(false, "Failed to write file to storage")
+        }
+
+        remainingLength -= receivedLength;
+    }
+
+    fclose(uploadFile->file);
+    httpd_resp_send_chunk(request, NULL, 0);
+
+    LOG_INFO(TAG, "File reception complete");
+    return ESP_OK;
+}
+
+static esp_err_t deleteFileAjaxHandler(httpd_req_t *request) {
+    LOG_DEBUG(TAG, "In admin delete file Ajax handler");
+    BufferString *uriStr = NEW_STRING(HTTPD_MAX_URI_LEN, request->uri);
+    BufferString *filePathStr = SUBSTRING_AFTER(PATH_MAX_LEN, uriStr, "filePath=");
+    ASSERT_400(isBuffStringNotEmpty(filePathStr) == true, "Empty file path")
+    LOG_DEBUG(TAG, "Request to delete file: [%s]", filePathStr->value);
+
+    File *fileToDelete = NEW_FILE(filePathStr->value);
+    ASSERT_400(isFileExists(fileToDelete), "Not existing file")
+    remove(fileToDelete->path);
+    httpd_resp_sendstr(request, "File deleted");
     return ESP_OK;
 }
 
@@ -959,7 +1101,7 @@ static CspObjectArray *mapApRecordsToList(wifi_ap_record_t *apRecords, uint16_t 
     return apList;
 }
 
-int apRecordComparator(const void *v1, const void *v2) {
+static int apRecordComparator(const void *v1, const void *v2) { // compare access points by it signal strength
     const wifi_ap_record_t *p1 = (wifi_ap_record_t *)v1;
     const wifi_ap_record_t *p2 = (wifi_ap_record_t *)v2;
     if (p1->rssi < p2->rssi) {
@@ -984,4 +1126,10 @@ static Properties *getPropertiesByFileName(const char *configFileName) {
 
     }
     return NULL;
+}
+
+static int propertyEntryKeyCompareFun(const void *one, const void *two) {
+    BufferString *firstKey = SUBSTRING_CSTR_BEFORE(PATH_MAX_LEN, ((MapEntry *) one)->key, ".");
+    BufferString *secondKey = SUBSTRING_CSTR_BEFORE(PATH_MAX_LEN, ((MapEntry *) two)->key, ".");
+    return strcmp(stringValue(firstKey), stringValue(secondKey));
 }

@@ -20,6 +20,7 @@ typedef enum PropertiesStatus {
 } PropertiesStatus;
 
 typedef struct Properties {
+    File file;
     HashMap map;
     PropertiesStatus status;
 } Properties;

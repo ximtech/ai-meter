@@ -5,11 +5,10 @@
 static const char *TAG = "ESP_CONFIG";
 
 BufferString espInfoStr = {0};
-static char messageBuffer[MESSAGE_BUFFER_LENGTH] = {0};
 
 
 bool setupEspCpuFrequency() {
-    char *cpuFrequency = getPropertyOrDefault(&appConfig, "system.cpu.frequency.mhz", "160");
+    char *cpuFrequency = getPropertyOrDefault(&appConfig, PROPERTY_SYSTEM_FREQUENCY_MHZ_KEY, "160");
 
     EspPowerManagementConfig powerManagement;
     if (esp_pm_get_configuration(&powerManagement) != ESP_OK) {
@@ -88,14 +87,15 @@ esp_err_t initExternalPSRAM() {
     LOG_INFO(TAG, "Total heap: [%s]", valueSizeStr->value);
 
     // Check heap memory
-    if (heapSize < 3000000) {  // Check available Heap memory for a bit less than 3 MB
-        LOG_ERROR(TAG, "Total heap >= 3000000 byte is mandatory to run this application");
+    if (heapSize < (4 * ONE_MB)) {  // Check available Heap memory for a bit less than 4 MB
+        LOG_ERROR(TAG, "Total heap >= %lld byte is mandatory to run this application", (4 * ONE_MB));
         // return ESP_FAIL;
     }
     return ESP_OK;
 }
 
 BufferString *getEspHeapInfo() {
+    static char messageBuffer[MESSAGE_BUFFER_LENGTH] = {0};
     newString(&espInfoStr, "", messageBuffer, MESSAGE_BUFFER_LENGTH);
 
 	size_t aFreeHeapSize  = heap_caps_get_free_size(MALLOC_CAP_8BIT);

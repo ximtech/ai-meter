@@ -11,8 +11,6 @@
 
 /**
  * Power management config for ESP32
- *
- * Pass a pointer to this structure as an argument to espPmConfigure function.
  */
 typedef struct EspPowerManagementConfig {
     int32_t maxFreqMhz;               // Maximum CPU frequency, in MHz

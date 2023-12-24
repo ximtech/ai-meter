@@ -12,13 +12,9 @@ handle telemetry data such as water, gas, and electricity meter readings autonom
 <img src="Images/intro.png" width="717" alt="esp32-cam">
 
 [//]: # (<p float="left">)
-
 [//]: # (  <img src="Images/esp32-cam.png" width="300" alt="esp32-cam">)
-
 [//]: # (  <img src="Images/green-right-arrow-600x320.png" width="100" height="150" alt="arrow"/> )
-
 [//]: # (  <img src="Images/meter_photo.png" width="300" alt="meter_photo"/>)
-
 [//]: # (</p>)
 
 ## Features
@@ -34,12 +30,12 @@ handle telemetry data such as water, gas, and electricity meter readings autonom
 - Self-sufficient file server with all containing images, icons, css, js, fonts etc
 - Long autonomous work from inner battery (up to 3 years)
 
-## In progress
+## TODO
 
-- Tensorflow Lite integration and image recognition
-- Caption DNS instead hardcoded IP for web view
-- Wi-Fi password and other sensitive data asymmetric encryption
-- File system control in an admin panel
+- Tensorflow Lite integration and image recognition ⬜
+- Caption DNS instead hardcoded IP for web view ⬜
+- Wi-Fi password and other sensitive data asymmetric encryption ⬜
+- File system control in an admin panel ✅
 
 ## Table of Contents
 
@@ -121,9 +117,12 @@ More info (schematic, PCB, BOM etc.) in `esp32-cam-shield` project
 
 ### Design notes
 
-- For current housing, push button should be used as follows:<br/>
+- For current housing, push button and switch should be used as follows:<br/>
 <img src="Images/push_button.png" width="70" alt="push-button"><br/>
-***3x4x2 mm SMD Switch 4 Pin Micro Switch Push Button***
+- ***3x4x2 mm SMD Switch 4 Pin Micro Switch Push Button***<br/>
+<img src="Images/slide-switch.png" width="120" alt="push-button">
+<img src="Images/slide-switch-dimensions.png" width="180" alt="push-button"><br/>
+- ***Mini Slide Switch On-OFF 2 positions, 7 pins***
 
 ### Power supply
 
@@ -176,14 +175,16 @@ The most common way to get firmware is to build it from sources:
 <img src="Images/platformio-build.png" width="200" alt="platformio-build">
 - If all ok, plug the device:<br/>
 
-|                                  With Adapter                                  |                                    Default                                     |
+|                              With custom adapter                               |                                Default from kit                                |
 |:------------------------------------------------------------------------------:|:------------------------------------------------------------------------------:|
 | <img src="Images/upload_connection.png" width="150" alt="upload_connection_1"> | <img src="Images/upload_connection.png" width="150" alt="upload_connection_2"> |
 
-- Then upload firmware and flash the device
+- Then upload firmware
 - When the process is finished, turn on the monitor to see log outputs:<br/>
 <img src="Images/serial-monitor.png" width="300" alt="battery">
 - By default, console log enabled and `debug` level is set (can be changed in config)
+
+## SD Card
 
 ## Housing
 

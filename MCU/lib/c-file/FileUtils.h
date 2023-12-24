@@ -32,7 +32,7 @@
 #endif
 
 #ifndef PATH_MAX_LEN
-    #define PATH_MAX_LEN PATH_MAX
+    #define PATH_MAX_LEN CONFIG_FATFS_MAX_LFN
 #endif
 
 #ifndef MAX_FILES_IN_DIR
