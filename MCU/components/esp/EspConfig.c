@@ -70,8 +70,7 @@ esp_err_t initExternalPSRAM() {
 
     // ESP_OK -> PSRAM init OK --> continue to check PSRAM size
     size_t psramSize = esp_psram_get_size();
-    BufferString *valueSizeStr = EMPTY_STRING(16);
-    byteCountToDisplaySize(psramSize, valueSizeStr);
+    BufferString *valueSizeStr = byteCountToDisplaySize(psramSize, EMPTY_STRING(16));
     LOG_INFO(TAG, "PSRAM size: [%zu] bytes [%s]", psramSize, valueSizeStr->value);
 
     // Check PSRAM size
@@ -81,9 +80,8 @@ esp_err_t initExternalPSRAM() {
     }
 
     // PSRAM size OK --> continue to check heap size
-    clearString(valueSizeStr);
     size_t heapSize = getEspHeapSize();
-    byteCountToDisplaySize(heapSize, valueSizeStr);
+    byteCountToDisplaySize(heapSize, clearString(valueSizeStr));
     LOG_INFO(TAG, "Total heap: [%s]", valueSizeStr->value);
 
     // Check heap memory

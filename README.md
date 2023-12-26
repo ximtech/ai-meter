@@ -11,12 +11,6 @@ handle telemetry data such as water, gas, and electricity meter readings autonom
 
 <img src="Images/intro.png" width="717" alt="esp32-cam">
 
-[//]: # (<p float="left">)
-[//]: # (  <img src="Images/esp32-cam.png" width="300" alt="esp32-cam">)
-[//]: # (  <img src="Images/green-right-arrow-600x320.png" width="100" height="150" alt="arrow"/> )
-[//]: # (  <img src="Images/meter_photo.png" width="300" alt="meter_photo"/>)
-[//]: # (</p>)
-
 ## Features
 
 - Easy configuration and setup
@@ -33,7 +27,7 @@ handle telemetry data such as water, gas, and electricity meter readings autonom
 ## TODO
 
 - Tensorflow Lite integration and image recognition ⬜
-- Caption DNS instead hardcoded IP for web view ⬜
+- Captive portal instead hardcoded IP for web view ⬜
 - Wi-Fi password and other sensitive data asymmetric encryption ⬜
 - File system control in an admin panel ✅
 
@@ -53,7 +47,12 @@ handle telemetry data such as water, gas, and electricity meter readings autonom
 - [Firmware](#firmware)
   - [Prerequisites](#prerequisites)
   - [Build](#build)
+  - [SD Card](#sd-card)
 - [Housing](#housing)
+  - [Water meter case](#water-meter-case)
+  - [Assembly](#water-meter-case)
+- [Geo IP](#geo-ip)
+- [Telegram chat bot](#telegram-chat-bot)
 - [Admin page](#admin-page)
 
 
@@ -119,10 +118,10 @@ More info (schematic, PCB, BOM etc.) in `esp32-cam-shield` project
 
 - For current housing, push button and switch should be used as follows:<br/>
 <img src="Images/push_button.png" width="70" alt="push-button"><br/>
-- ***3x4x2 mm SMD Switch 4 Pin Micro Switch Push Button***<br/>
+***3x4x2 mm SMD Switch 4 Pin Micro Switch Push Button***<br/>
 <img src="Images/slide-switch.png" width="120" alt="push-button">
 <img src="Images/slide-switch-dimensions.png" width="180" alt="push-button"><br/>
-- ***Mini Slide Switch On-OFF 2 positions, 7 pins***
+***Mini Slide Switch On-OFF 2 positions, 7 pins***
 
 ### Power supply
 
@@ -158,7 +157,9 @@ You can also drop some solder to connect those points (you don’t necessarily n
 ## Wiring
 
 After soldering all together, it should look like on a photo:<br/>
-<img src="" width="200" alt="wired-and-soldered">
+
+## TODO
+<img src="Images/wired_and_soldered.png" width="200" alt="wired-and-soldered">
 
 ## Firmware
 
@@ -175,9 +176,9 @@ The most common way to get firmware is to build it from sources:
 <img src="Images/platformio-build.png" width="200" alt="platformio-build">
 - If all ok, plug the device:<br/>
 
-|                              With custom adapter                               |                                Default from kit                                |
-|:------------------------------------------------------------------------------:|:------------------------------------------------------------------------------:|
-| <img src="Images/upload_connection.png" width="150" alt="upload_connection_1"> | <img src="Images/upload_connection.png" width="150" alt="upload_connection_2"> |
+|                              With custom adapter                               |  OR   |                                Default from kit                                |
+|:------------------------------------------------------------------------------:|:-----:|:------------------------------------------------------------------------------:|
+| <img src="Images/upload_connection.png" width="150" alt="upload_connection_1"> |       | <img src="Images/upload_connection.png" width="150" alt="upload_connection_2"> |
 
 - Then upload firmware
 - When the process is finished, turn on the monitor to see log outputs:<br/>
@@ -186,10 +187,87 @@ The most common way to get firmware is to build it from sources:
 
 ## SD Card
 
+The software expects an SD card prepared with certain directory and file structure to work properly. 
+Card content can be found in `ai-meter -> MCU -> sd-card`.
+Just copy all content in properly formatted(see notes) SD card.
+As a result in most top directory should look like this:<br/>
+<img src="Images/sd-card.png" width="150" alt="battery">
+
+#### Notes
+
+- Due to the constrained GPIO availability for components such as OV2640, Flash-Light, PSRAM, and SD card, 
+  the communication mode with the SD card is confined to 1-line SD-Mode.
+  This limitation can cause problems with high-capacity SD cards (64GB, and sometimes 32GB),
+  as well as inexpensive, unbranded SD cards.
+- Following setting they are necessary for formatting the SD-card: SINGLE PARTITION, MBR, FAT32 - 32K. NOT exFAT
+
 ## Housing
 
-The `3D Model` directory contains SolidWorks source models and `STL` directory with printing ready files
+---
 
+## Water meter case
+
+The `3D Model` directory contains `SolidWorks` source models for 3D printing.
+All that needs to be printed for a single device from `water` directory:
+- 1x -`Base.SLDASM` -> ***Resolution: 0.2, Walls: 2–3, Infill: 20%+, Supports: Yes, Filament material: PLA***
+- 3x -`Battery_Lid.SLDASM` -> ***Resolution: 0.2, Walls: 2, Infill: 100%, Supports: No, Filament material: PLA***
+- 1x -`Button.SLDASM` -> ***Resolution: 0.12, Walls: 2, Infill: 100%, Supports: No, Filament material: PLA***
+- 1x -`Flash_Reflector.SLDASM` -> ***Resolution: 0.12, Walls: 2, Infill: 50%+, Supports: No, Filament material: Transparent PLA***
+- 1x -`Led_Pipe.SLDASM` -> ***Resolution: 0.12, Walls: 2, Infill: 100%, Supports: No, Filament material: Transparent PLA***
+- 1x -`Holder.SLDASM` -> ***Resolution: 0.2, Walls: 2–3, Infill: 20%+, Supports: No, Filament material: PLA***
+- 1x -`Lid.SLDASM` -> ***Resolution: 0.2, Walls: 2–3, Infill: 20%+, Supports: No, Filament material: PLA***
+- 1x -`On_Off_Switch.SLDASM` -> ***Resolution: 0.12, Walls: 2, Infill: 100%, Supports: No, Filament material: PLA***
+
+## Assembly
+
+### Prerequisites
+
+- 4x - ***M3 Brass inserts: 5–8mm tall***
+- 20x - ***3x2mm Round neodymium magnets***<br/>
+<img src="Images/round_magnets.png" width="200" alt="round-magnets">
+
+### 1. Melt brass inserts into the base holes
+
+<img src="Images/inserts.jpg" width="200" alt="inserts">
+
+### 2. Insert contact magnets to base and holder
+
+<img src="Images/insert_magnets.jpg" width="150" alt="magnets">
+
+***Note:*** Place magnets according to a letter on the case: `S` -> indicating that the south pole should be facing upward. 
+
+### 3. Place reflector
+
+<img src="Images/reflector_placement.jpg" width="200" alt="reflector">
+
+### 4. Place and then solder battery wires
+
+<img src="Images/base_batteries.jpg" width="250" alt="batteries">
+
+***Note: Connect all batteries in parallel***
+
+### 5. Cover batteries
+
+<img src="Images/batteries_with_cover.jpg" width="250" alt="batteries">
+
+### 6. Place PCB
+
+### 7. Place on/off switch, button and led pipe
+
+### 8. Screw up the lid
+
+---
+
+## Geo IP
+
+Get IP geolocation API token: [link](https://ipgeolocation.io/)
+
+## Telegram chat bot
+
+How to create a Telegram bot: [link](https://www.directual.com/lesson-library/how-to-create-a-telegram-bot)
 
 
 ## Admin page
+
+Access the admin page through the following link: `http://192.168.4.1/admin`<br/>
+<img src="Images/admin_page.png" width="250" alt="batteries"><br/>
