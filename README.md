@@ -22,7 +22,7 @@ handle telemetry data such as water, gas, and electricity meter readings autonom
 - Using an advanced [Date-time](https://github.com/ximtech/GlobalDateTime) library that supports timezones and DST rules
 - Embedded database(Sqlite) that stores timezones and DST rules
 - Self-sufficient file server with all containing images, icons, css, js, fonts etc
-- Long autonomous work from inner battery (up to 3 years)
+- Long autonomous work from inner battery (up to 1 year)
 
 ## TODO
 
@@ -37,6 +37,10 @@ handle telemetry data such as water, gas, and electricity meter readings autonom
   * [First time setup](#first-time-setup)
   * [Workflow](#workflow)
   * [Setup as needed](#setup-as-needed)
+- [Software](#software)
+  - [SD Card](#sd-card)
+  - [Build](#build)
+  - [Prerequisites](#prerequisites)
 - [Hardware](#hardware)
   * [Adapter board](#adapter-board)
   * [Design notes](#design-notes)
@@ -44,13 +48,9 @@ handle telemetry data such as water, gas, and electricity meter readings autonom
   * [Batteries](#batteries)
   * [External antenna](#external-antenna)
   * [Wiring](#wiring)
-- [Firmware](#firmware)
-  - [Prerequisites](#prerequisites)
-  - [Build](#build)
-  - [SD Card](#sd-card)
 - [Housing](#housing)
   - [Water meter case](#water-meter-case)
-  - [Assembly](#water-meter-case)
+    - [Assembly](#water-meter-case)
 - [Geo IP](#geo-ip)
 - [Telegram chat bot](#telegram-chat-bot)
 - [Admin page](#admin-page)
@@ -80,6 +80,46 @@ then after wakeup it verifies if it's a time and if all ok, then starting job ex
 
 When there is a need to reconfigure or update the device while it is in sleep mode, press config button.
 Then wait when led starts blinking and search Wi-Fi access point with name assigned from initial setup.
+
+## Software
+
+## SD Card
+
+The software expects an SD card prepared with certain directory and file structure to work properly.
+Card content can be found in `ai-meter -> MCU -> sd-card`.
+Just copy all content in properly formatted(see notes) SD card.
+As a result in most top directory should look like this:<br/>
+<img src="Images/sd-card.png" width="150" alt="battery">
+
+#### Notes
+
+- Due to the constrained GPIO availability for components such as OV2640, Flash-Light, PSRAM, and SD card,
+  the communication mode with the SD card is confined to 1-line SD-Mode.
+  This limitation can cause problems with high-capacity SD cards (64GB, and sometimes 32GB),
+  as well as inexpensive, unbranded SD cards.
+- Following setting they are necessary for formatting the SD-card: SINGLE PARTITION, MBR, FAT32—32K. NOT exFAT
+
+#### Format example
+
+<img src="Images/sd-format-options.png" width="200" alt="format-example">
+
+### Build
+
+### Prerequisites
+
+- Esp-idf and Platformio should be already installed
+
+The most common way to get firmware is to build it from sources:
+- Clone this repository and open `MCU` directory as a project:
+- In `Visual Studio Code` -> Open Folder -> MCU
+- Then run PlatformIO build: <br/>
+  <img src="Images/platformio-build.png" width="200" alt="platformio-build">
+- If all ok, plug the device:<br/>
+  <img src="Images/upload_connection.png" width="150" alt="upload_connection_2">
+- Then upload firmware
+- When the process is finished, turn on the monitor to see log outputs:<br/>
+  <img src="Images/serial-monitor.png" width="300" alt="battery">
+- By default, console log enabled and `debug` level is set (can be changed in config)
 
 ## Hardware
 
@@ -157,49 +197,7 @@ You can also drop some solder to connect those points (you don’t necessarily n
 ## Wiring
 
 After soldering all together, it should look like on a photo:<br/>
-
-## TODO
-<img src="Images/wired_and_soldered.png" width="200" alt="wired-and-soldered">
-
-## Firmware
-
-### Prerequisites
-
-- Esp-idf and Platformio should be already installed 
-
-### Build
-
-The most common way to get firmware is to build it from sources:
-- Clone this repository and open `MCU` directory as a project:
-- In `Visual Studio Code` -> Open Folder -> MCU
-- Then run PlatformIO build: <br/>
-<img src="Images/platformio-build.png" width="200" alt="platformio-build">
-- If all ok, plug the device:<br/>
-
-|                              With custom adapter                               |  OR   |                                Default from kit                                |
-|:------------------------------------------------------------------------------:|:-----:|:------------------------------------------------------------------------------:|
-| <img src="Images/upload_connection.png" width="150" alt="upload_connection_1"> |       | <img src="Images/upload_connection.png" width="150" alt="upload_connection_2"> |
-
-- Then upload firmware
-- When the process is finished, turn on the monitor to see log outputs:<br/>
-<img src="Images/serial-monitor.png" width="300" alt="battery">
-- By default, console log enabled and `debug` level is set (can be changed in config)
-
-## SD Card
-
-The software expects an SD card prepared with certain directory and file structure to work properly. 
-Card content can be found in `ai-meter -> MCU -> sd-card`.
-Just copy all content in properly formatted(see notes) SD card.
-As a result in most top directory should look like this:<br/>
-<img src="Images/sd-card.png" width="150" alt="battery">
-
-#### Notes
-
-- Due to the constrained GPIO availability for components such as OV2640, Flash-Light, PSRAM, and SD card, 
-  the communication mode with the SD card is confined to 1-line SD-Mode.
-  This limitation can cause problems with high-capacity SD cards (64GB, and sometimes 32GB),
-  as well as inexpensive, unbranded SD cards.
-- Following setting they are necessary for formatting the SD-card: SINGLE PARTITION, MBR, FAT32 - 32K. NOT exFAT
+<img src="Images/wired_and_soldered.jpg" width="200" alt="wired-and-soldered"><br/>
 
 ## Housing
 
@@ -248,19 +246,26 @@ All that needs to be printed for a single device from `water` directory:
 
 ### 5. Cover batteries
 
-<img src="Images/batteries_with_cover.jpg" width="250" alt="batteries">
+<img src="Images/batteries_with_cover.jpg" width="250" alt="batteries_with_cover">
 
 ### 6. Place PCB
 
+<img src="Images/pcb-placement.jpg" width="250" alt="pcb-placement">
+
 ### 7. Place on/off switch, button and led pipe
 
+<img src="Images/switch-placement.jpg" width="180" alt="switch-placement">
+<img src="Images/lid_buttons.jpg" width="194" alt="lid_buttons">
+
 ### 8. Screw up the lid
+
+### 9. Mounting
 
 ---
 
 ## Geo IP
 
-Get IP geolocation API token: [link](https://ipgeolocation.io/)
+Register and get IP geolocation API token: [link](https://ipgeolocation.io/)
 
 ## Telegram chat bot
 

@@ -10,7 +10,7 @@ static void initHttpResponseBuffer();
 static esp_err_t httpEventHandler(esp_http_client_event_t *event);
 static esp_err_t onDataHandler(esp_http_client_event_t *event, HttpHandlerData *httpData);
 static void onFinishHandler(esp_http_client_event_t *event, HttpHandlerData *httpData);
-static void onDissconnecthHandler(esp_http_client_event_t *event, HttpHandlerData *httpData);
+static void onDisconnecthHandler(esp_http_client_event_t *event, HttpHandlerData *httpData);
 
 esp_http_client_handle_t restClient;
 char *httpResponseBuffer = NULL;
@@ -49,7 +49,7 @@ esp_err_t sendFormDataInChunks(esp_http_client_handle_t client, const char *data
         }
     }
 
-    LOG_INFO(TAG, "Form data chunks has been sucessfully send");
+    LOG_INFO(TAG, "Form data chunks has been successfully send");
     return ESP_OK;
 }
 
@@ -91,7 +91,7 @@ static esp_err_t httpEventHandler(esp_http_client_event_t *event) {
             break;
         case HTTP_EVENT_DISCONNECTED:
             LOG_INFO(TAG, "HTTP_EVENT_DISCONNECTED");
-            onDissconnecthHandler(event, &httpData);
+            onDisconnecthHandler(event, &httpData);
             break;
         case HTTP_EVENT_REDIRECT:
             LOG_DEBUG(TAG, "HTTP_EVENT_REDIRECT");
@@ -145,7 +145,7 @@ static void onFinishHandler(esp_http_client_event_t *event, HttpHandlerData *htt
     httpData->outputLength = 0;
 }
 
-static void onDissconnecthHandler(esp_http_client_event_t *event, HttpHandlerData *httpData) {
+static void onDisconnecthHandler(esp_http_client_event_t *event, HttpHandlerData *httpData) {
     int mbedtlsError = 0;
     esp_err_t error = esp_tls_get_and_clear_last_error((esp_tls_error_handle_t) event->data, &mbedtlsError, NULL);
     if (error != ESP_OK) {

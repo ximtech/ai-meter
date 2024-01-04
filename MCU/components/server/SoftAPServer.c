@@ -570,10 +570,11 @@ static esp_err_t saveWifiCredentialsAjaxHandler(httpd_req_t *request) {
         esp_http_client_set_header(restClient, "Accept", "*/*");
         esp_http_client_set_header(restClient, "Cache-Control", "no-cache");
         esp_err_t status = esp_http_client_perform(restClient);
+        int httpStatusCode = esp_http_client_get_status_code(restClient);
 
-        if (status == ESP_OK) {
+        if (status == ESP_OK && httpStatusCode == HttpStatus_Ok) {
             uint32_t responseLength = strlen(httpResponseBuffer);
-            LOG_INFO(TAG, "HTTP GET Status = %d, Content length = %d", esp_http_client_get_status_code(restClient), responseLength);
+            LOG_INFO(TAG, "HTTP GET Status = %d, Content length = %d", httpStatusCode, responseLength);
 
             if (responseLength > 0) {
                 JSONTokener jsonTokener = getJSONTokener(httpResponseBuffer, responseLength);
@@ -1081,6 +1082,7 @@ static esp_err_t deleteFileAjaxHandler(httpd_req_t *request) {
 static esp_err_t restartEspAjaxHandler(httpd_req_t *request) {
     storeProperties(&wlanConfig, WLAN_CONFIG_FILE);
     storeProperties(&appConfig, CONFIG_FILE);
+    destroyWifi(); // disconnect from Wi-Fi
     LOG_INFO(TAG, "All properties saved. Restarting...");
     esp_restart();
 }

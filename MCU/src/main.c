@@ -27,11 +27,14 @@
 #include "SoftAPServer.h"
 
 /*
- * Two resistor devider of 100K and 10K
+ * Two resistors divider of 100K and 10K
  *
  * Vbat     Vin      GND
  *  |        |        |
  *  +--[R1]--+--[R2]--+
+ *
+ *  R1 = 100kOhms
+ *  R2 = 10kOhms
 */
 #define R1 100
 #define R2 10
@@ -40,13 +43,9 @@
 // We can take the battery voltage of 4.1V as 100% and the voltage of 3.3V as 0%
 #define BATTERY_VOLTAGE_MAX 4100
 #define BATTERY_VOLTAGE_MIN 3300
-#define ADC_REFERENCE 1100      // The reference voltage of ESP32 ADC is 1100mV
 
-#define VOLTAGE_TO_ADC(in) ((ADC_REFERENCE * (in)) / 4096)      // The value returned from ADC working in 12-bit mode will be in range 0 to 4095
-
-// Minimal and maximal values of battery voltage converted by a resistor divider and returned from ADC
-#define BATTERY_MAX_ADC VOLTAGE_TO_ADC(VOLTAGE_OUT(BATTERY_VOLTAGE_MAX))
-#define BATTERY_MIN_ADC VOLTAGE_TO_ADC(VOLTAGE_OUT(BATTERY_VOLTAGE_MIN))    // 100 * (adc - BATTERY_MIN_ADC) / (BATTERY_MAX_ADC - BATTERY_MIN_ADC);
+#define BATTERY_DIVIDER_VOLTAGE_MAX (VOLTAGE_OUT(BATTERY_VOLTAGE_MAX))
+#define BATTERY_DIVIDER_VOLTAGE_MIN (VOLTAGE_OUT(BATTERY_VOLTAGE_MIN))
 
 static const char *TAG = "MAIN";
 
@@ -60,11 +59,12 @@ sqlite3 *embeddedDb;
 static int batteryPercentage;
 static DateTimeFormatter photoFileDateTimeFormatter;
 
-static int getBatteryPercentage();
+static int logOverrideFunction(const char *format, va_list argumentList);
+static int getBatteryDividerVoltage();
 static bool adcCalibrationInit(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *outHandle);
 static void adcCalibrationDeinit(adc_cali_handle_t handle);
 
-static int calculateBatteryPercentage(int adc);
+static int calculateBatteryPercentage(int dividerVoltage);
 static void executeCronJob();
 static void cleanupPhotoDirectory();
 static int fileDateCompareFunction (const void *one, const void *two);
@@ -80,7 +80,7 @@ void app_main() {
     }
 
     vTaskDelay(pdMS_TO_TICKS(3000));
-    batteryPercentage = getBatteryPercentage();
+    int dividerVoltage = getBatteryDividerVoltage();
 
     LOG_INFO(TAG, "\n================ Start app_main =================");
 
@@ -116,7 +116,7 @@ void app_main() {
 
     Properties *properties = loadProperties(&appConfig, CONFIG_FILE);
     if (properties->status != CONFIG_PROP_OK) {
-        LOG_ERROR(TAG, "Filed to load aplication properties [%s]. Message: [%s]", CONFIG_FILE, propStatusToString(properties->status));
+        LOG_ERROR(TAG, "Filed to load application properties [%s]. Message: [%s]", CONFIG_FILE, propStatusToString(properties->status));
         statusLed(CONFIG_PROP_ERROR, properties->status, true);
         return; // mandatory application properties
     }
@@ -152,12 +152,13 @@ void app_main() {
             statusLed(SD_CARD_CHECK_ERROR, SD_CARD_ERROR_CREATE_FILE, true);
             return;
         }
+        esp_log_set_vprintf(logOverrideFunction);   // redirect all logs to custom logger
 
         bool isConsoleLogEnabled = isStringEquals(getPropertyOrDefault(&appConfig, PROPERTY_LOG_CONSOLE_ENABLED_KEY, "false"), "true");
         if (!isConsoleLogEnabled) {
             LOG_INFO(TAG, "At this point console log will be disabled");
             esp_log_level_set("*", ESP_LOG_NONE);
-            loggerUnsubscribe(consoleLogger);     // Console logger doesn't need it anymore, all logs will be stored in a log file
+            loggerUnsubscribe(consoleLogger);     // Console logger doesn't need this anymore, all logs will be stored in a log file
         }
         LOG_INFO(TAG, "\nLog file directory: [%s]\n "
                     "File logger level: [%s]\n "
@@ -226,8 +227,7 @@ void app_main() {
     LOG_DEBUG(TAG, "main: sleep for: %d ms", xDelay);
     vTaskDelay(pdMS_TO_TICKS(xDelay));
 
-    LOG_INFO(TAG, "Battery percentage: %d%%", batteryPercentage);
-
+    batteryPercentage = calculateBatteryPercentage(dividerVoltage);
     newFile(&imageDirRoot, CAMERA_IMAGE_DIR);
     MKDIR(imageDirRoot.path);
 
@@ -284,6 +284,7 @@ void app_main() {
     cleanupPhotoDirectory();    // remove old photos
     destroyWifi();              // disconnect from Wi-Fi
     configureButtonWakeup();    // if button pressed, then need to reconfigure app settings, wakeup from sleep and start soft AP server
+    nvs_flash_deinit();
     enterTimerDeepSleep(calculateSecondsToWaitFromNow());
 }
 
@@ -300,12 +301,19 @@ void configureButtonWakeup() {
     esp_sleep_enable_ext0_wakeup(CONFIG_START_GPIO, 1); // 1 for high-level wakeup
 }
 
-static int getBatteryPercentage() {
+static int logOverrideFunction(const char *format, va_list argumentList) {
+    static char buffer[LOGGER_BUFFER_SIZE] = {0};
+    vsprintf(buffer, format, argumentList);
+    LOG_TRACE(TAG, trimString(buffer));
+    return vprintf(format, argumentList); // ALWAYS Write to stdout
+}
+
+static int getBatteryDividerVoltage() {
     LOG_DEBUG(TAG, "-------------ADC2 Init---------------");
     adc_oneshot_unit_handle_t adc2Handle;
     adc_oneshot_unit_init_cfg_t initConfig = {
-        .unit_id = ADC_UNIT_2,
-        .ulp_mode = ADC_ULP_MODE_DISABLE,
+            .unit_id = ADC_UNIT_2,
+            .ulp_mode = ADC_ULP_MODE_DISABLE,
     };
     ESP_ERROR_CHECK(adc_oneshot_new_unit(&initConfig, &adc2Handle));
 
@@ -315,21 +323,21 @@ static int getBatteryPercentage() {
 
     LOG_DEBUG(TAG, "-------------ADC2 Config---------------");
     adc_oneshot_chan_cfg_t config = {
-        .bitwidth = ADC_BITWIDTH_DEFAULT,
-        .atten = ADC_ATTEN_DB_11,
+            .bitwidth = ADC_BITWIDTH_DEFAULT,
+            .atten = ADC_ATTEN_DB_11,
     };
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc2Handle, BATTERY_ADC_CHANNEL, &config));
-    
+
     LOG_DEBUG(TAG, "-------------ADC2 Read---------------");
     int outRaw = 0;
     int voltage = 0;
 
     ESP_ERROR_CHECK(adc_oneshot_read(adc2Handle, BATTERY_ADC_CHANNEL, &outRaw));
-        LOG_INFO(TAG, "ADC%d Channel[%d] Raw Data: %d", ADC_UNIT_2 + 1, BATTERY_ADC_CHANNEL, outRaw);
-        if (isDoCalibration) {
-            ESP_ERROR_CHECK(adc_cali_raw_to_voltage(adc2CalibrationHandle, outRaw, &voltage));
-            LOG_INFO(TAG, "ADC%d Channel[%d] Calibration Voltage: %d mV", ADC_UNIT_2 + 1, BATTERY_ADC_CHANNEL, voltage);
-        }
+    LOG_INFO(TAG, "ADC%d Channel[%d] Raw Data: %d", ADC_UNIT_2 + 1, BATTERY_ADC_CHANNEL, outRaw);
+    if (isDoCalibration) {
+        ESP_ERROR_CHECK(adc_cali_raw_to_voltage(adc2CalibrationHandle, outRaw, &voltage));
+        LOG_INFO(TAG, "ADC%d Channel[%d] Calibration Voltage: %d mV", ADC_UNIT_2 + 1, BATTERY_ADC_CHANNEL, voltage);
+    }
 
     //Tear Down
     ESP_ERROR_CHECK(adc_oneshot_del_unit(adc2Handle));
@@ -337,8 +345,7 @@ static int getBatteryPercentage() {
         adcCalibrationDeinit(adc2CalibrationHandle);
     }
     gpio_reset_pin(BATTERY_GPIO_PIN);
-
-    return calculateBatteryPercentage(outRaw);
+    return voltage;
 }
 
 static bool adcCalibrationInit(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *outHandle) {
@@ -400,9 +407,9 @@ static void adcCalibrationDeinit(adc_cali_handle_t handle) {
 #endif
 }
 
-static int calculateBatteryPercentage(int adc) {
-    int battPercentage = 100 * (adc - BATTERY_MIN_ADC) / (BATTERY_MAX_ADC - BATTERY_MIN_ADC);
-    LOG_DEBUG(TAG, "Battery ADC: [%d], Percentage: [%d%%]", adc, battPercentage);
+static int calculateBatteryPercentage(int dividerVoltage) {
+    int battPercentage = 100 * (dividerVoltage - BATTERY_DIVIDER_VOLTAGE_MIN) / (BATTERY_DIVIDER_VOLTAGE_MAX - BATTERY_DIVIDER_VOLTAGE_MIN);
+    LOG_INFO(TAG, "Battery divider voltage: [%d], Percentage: [%d%%]", dividerVoltage, battPercentage);
 
     if (battPercentage < 0) {
         return 0;

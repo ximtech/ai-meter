@@ -44,7 +44,7 @@ SDCardStatus initNvsSDCard() {
     esp_err_t status = nvs_flash_init();
     if (status == ESP_ERR_NVS_NO_FREE_PAGES) {
         ESP_ERROR_CHECK(nvs_flash_erase());
-        status = nvs_flash_init();
+        nvs_flash_init();
     }
 
     // Options for mounting the filesystem.

@@ -2,6 +2,30 @@
 FileName = PCB.GBR
 AutoAperture = True
 *************************************************************
+Generating : Drill Drawing
+      File : PCB.GD1
+
+    Adding Drill Pair : Top Layer-Bottom Layer
+
+    Adding Layer      : Drill Drawing
+
+
+Used DCodes :
+    D82
+    D83
+*************************************************************
+
+*************************************************************
+Generating : Route Guide
+      File : PCB.GM32767
+
+    Adding Layer      : Route Guide
+
+
+Used DCodes :
+*************************************************************
+
+*************************************************************
 Generating : Top Layer
       File : PCB.GTL
 
@@ -48,40 +72,39 @@ Used DCodes :
 *************************************************************
 
 *************************************************************
-Generating : Bottom Layer
-      File : PCB.GBL
+Generating : PCBM Notes
+      File : PCB.GM2
 
-    Adding Layer      : Bottom Layer
-
-    Adding Layer      : Multi-Layer
+    Adding Layer      : PCBM Notes
 
 
 Used DCodes :
-    D20
-    D71
-    D72
-    D73
-    D74
-    D75
-    D76
-    D77
 *************************************************************
 
 *************************************************************
-Generating : Bottom Pad Master
-      File : PCB.GPB
+Generating : PCBD Notes
+      File : PCB.GM3
 
-    Adding Layer      : Bottom Layer
-
-    Adding Layer      : Multi-Layer
+    Adding Layer      : PCBD Notes
 
 
 Used DCodes :
-    D20
-    D73
-    D74
-    D75
-    D76
+*************************************************************
+
+*************************************************************
+Generating : Top Overlay
+      File : PCB.GTO
+
+    Adding Layer      : Top Overlay
+
+
+Used DCodes :
+    D10
+    D11
+    D12
+    D13
+    D14
+    D15
 *************************************************************
 
 *************************************************************
@@ -127,55 +150,6 @@ Used DCodes :
 *************************************************************
 
 *************************************************************
-Generating : Top Overlay
-      File : PCB.GTO
-
-    Adding Layer      : Top Overlay
-
-
-Used DCodes :
-    D10
-    D11
-    D12
-    D13
-    D14
-    D15
-*************************************************************
-
-*************************************************************
-Generating : Top 3D Body
-      File : PCB.GM13
-
-    Adding Layer      : Top 3D Body
-
-
-Used DCodes :
-    D12
-    D79
-    D80
-*************************************************************
-
-*************************************************************
-Generating : PCBD Notes
-      File : PCB.GM3
-
-    Adding Layer      : PCBD Notes
-
-
-Used DCodes :
-*************************************************************
-
-*************************************************************
-Generating : Route Guide
-      File : PCB.GM32767
-
-    Adding Layer      : Route Guide
-
-
-Used DCodes :
-*************************************************************
-
-*************************************************************
 Generating : Top Courtyard
       File : PCB.GM15
 
@@ -190,72 +164,8 @@ Used DCodes :
 *************************************************************
 
 *************************************************************
-Generating : PCBM Notes
-      File : PCB.GM2
-
-    Adding Layer      : PCBM Notes
-
-
-Used DCodes :
-*************************************************************
-
-*************************************************************
-Generating : Bottom 3D Body
-      File : PCB.GM14
-
-    Adding Layer      : Bottom 3D Body
-
-
-Used DCodes :
-*************************************************************
-
-*************************************************************
-Generating : Board outline
-      File : PCB.GM1
-
-    Adding Layer      : Board outline
-
-
-Used DCodes :
-    D10
-    D78
-*************************************************************
-
-*************************************************************
-Generating : Bottom Courtyard
-      File : PCB.GM16
-
-    Adding Layer      : Bottom Courtyard
-
-
-Used DCodes :
-*************************************************************
-
-*************************************************************
-Generating : Keep-Out Layer
-      File : PCB.GKO
-
-    Adding Layer      : Keep-Out Layer
-
-
-Used DCodes :
-*************************************************************
-
-*************************************************************
-Generating : Bottom Overlay
-      File : PCB.GBO
-
-    Adding Layer      : Bottom Overlay
-
-
-Used DCodes :
-*************************************************************
-
-*************************************************************
-Generating : Bottom Solder
-      File : PCB.GBS
-
-    Adding Layer      : Bottom Solder
+Generating : Bottom Pad Master
+      File : PCB.GPB
 
     Adding Layer      : Bottom Layer
 
@@ -263,12 +173,31 @@ Generating : Bottom Solder
 
 
 Used DCodes :
-    D41
-    D42
-    D43
-    D44
-    D45
-    D46
+    D20
+    D73
+    D74
+    D75
+    D76
+*************************************************************
+
+*************************************************************
+Generating : Bottom Layer
+      File : PCB.GBL
+
+    Adding Layer      : Bottom Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D20
+    D71
+    D72
+    D73
+    D74
+    D75
+    D76
+    D77
 *************************************************************
 
 *************************************************************
@@ -317,16 +246,87 @@ Used DCodes :
 *************************************************************
 
 *************************************************************
-Generating : Drill Drawing
-      File : PCB.GD1
+Generating : Bottom Courtyard
+      File : PCB.GM16
 
-    Adding Drill Pair : Top Layer-Bottom Layer
-
-    Adding Layer      : Drill Drawing
+    Adding Layer      : Bottom Courtyard
 
 
 Used DCodes :
-    D82
-    D83
+*************************************************************
+
+*************************************************************
+Generating : Bottom 3D Body
+      File : PCB.GM14
+
+    Adding Layer      : Bottom 3D Body
+
+
+Used DCodes :
+*************************************************************
+
+*************************************************************
+Generating : Bottom Solder
+      File : PCB.GBS
+
+    Adding Layer      : Bottom Solder
+
+    Adding Layer      : Bottom Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D41
+    D42
+    D43
+    D44
+    D45
+    D46
+*************************************************************
+
+*************************************************************
+Generating : Top 3D Body
+      File : PCB.GM13
+
+    Adding Layer      : Top 3D Body
+
+
+Used DCodes :
+    D12
+    D79
+    D80
+*************************************************************
+
+*************************************************************
+Generating : Bottom Overlay
+      File : PCB.GBO
+
+    Adding Layer      : Bottom Overlay
+
+
+Used DCodes :
+*************************************************************
+
+*************************************************************
+Generating : Keep-Out Layer
+      File : PCB.GKO
+
+    Adding Layer      : Keep-Out Layer
+
+
+Used DCodes :
+*************************************************************
+
+*************************************************************
+Generating : Board outline
+      File : PCB.GM1
+
+    Adding Layer      : Board outline
+
+
+Used DCodes :
+    D10
+    D78
 *************************************************************
 

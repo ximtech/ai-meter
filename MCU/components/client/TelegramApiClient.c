@@ -14,6 +14,7 @@ esp_err_t getLastTelegramMessage() {
     esp_http_client_set_header(restClient, "Accept", "*/*");
     esp_http_client_set_header(restClient, "Host", "api.telegram.org");
     esp_http_client_set_header(restClient, "Cache-Control", "no-cache");
+    esp_http_client_set_header(restClient, "Connection", "keep-alive");
     esp_http_client_set_header(restClient, "Content-Type", "application/x-www-form-urlencoded");
 
     const char *postData = "limit=1&offset=-1";

@@ -4,9 +4,9 @@ C:\Users\Stason\Desktop\Projects\ESP32\ai-meter\esp32-cam-shield\.\Fabrication F
 ========================================================================================================================
 File Design Information:
 
-Date:       20.12.23
-Time:       16:57
-Revision:   01873d27d29e46c15666ad6c1319d3694cbf202c
+Date:       02.01.24
+Time:       20:40
+Revision:   d9e59299b6d42bc44744539acc0fbb68b625b2f2
 Variant:    No variations
 Units used: mm
 
@@ -28,7 +28,7 @@ D-         "Test point"         TopLayer TEST_POINT              12.8350      6.
 VCC        "Test point"         TopLayer TEST_POINT              11.0000      6.3000       0        ""                                                                                                                      
 R12        "10 kOhms"           TopLayer RES_0603_1608           22.2500      20.0000      90       "RES SMD 10K OHM 1% 1/10W 0603"                                                                                         
 R11        "100 kOhms"          TopLayer RES_0603_1608           22.2500      23.1000      90       "PTN0603 10PPM 100K 0.1% S T1 E1"                                                                                       
-R10        "499 kOhms"          TopLayer RES_0603_1608           11.2950      29.4500      180      "RES 499K OHM 1% 1/10W 0603"                                                                                            
+R10        "499 kOhms"          TopLayer RES_0603_1608           11.4079      29.4500      180      "RES 499K OHM 1% 1/10W 0603"                                                                                            
 R9         RC1608F102CS         TopLayer RES_0603_1608           12.5000      27.0750      90       "RES SMD 1K OHM 1% 1/10W 0603"                                                                                          
 R8         "453 kOhms"          TopLayer RES_0603_1608           14.5000      34.7000      180      "RES 453K OHM 1% 1/10W 0603"                                                                                            
 R7         "100 kOhms"          TopLayer RES_0603_1608           16.1619      32.1600      270      "RES SMD 100K OHM 0.1% 0.15W 0603"                                                                                      
@@ -38,9 +38,9 @@ R4         "330 Ohms"           TopLayer RES_0603_1608           22.0000      11
 R3         RC1608F101CS         TopLayer RES_0603_1608           20.6500      30.0000      90       "RES SMD 100 OHM 1% 1/10W 0603"                                                                                         
 R2         "330 Ohms"           TopLayer RES_0603_1608           19.9680      11.3375      270      "RES 330 OHM 1% 1/10W 0603"                                                                                             
 R1         "3.9 kOhms"          TopLayer RES_0603_1608           13.2900      22.0754      90       "RES SMD 3.9K OHM 0.1% 1/10W 0603"                                                                                      
-P2         "Header 8"           TopLayer HDR1X8                  1.7500       25.8100      270      "Header, 8-Pin"                                                                                                         
-P1         "Header 8"           TopLayer HDR1X8                  25.2500      25.8100      270      "Header, 8-Pin"                                                                                                         
-L1         "15 µH"              TopLayer TAIYO_YUDEN_NR4018      7.6375       31.2500      180      "FIXED IND 15UH 650MA 300MOHM SMD"                                                                                      
+P2         "Header 8"           TopLayer HDR1X8                  2.2500       25.8100      270      "Header, 8-Pin"                                                                                                         
+P1         "Header 8"           TopLayer HDR1X8                  24.7500      25.8100      270      "Header, 8-Pin"                                                                                                         
+L1         "15 µH"              TopLayer TAIYO_YUDEN_NR4018      7.8500       31.5135      180      "FIXED IND 15UH 650MA 300MOHM SMD"                                                                                      
 J3         10118193-0001LF      TopLayer FCI_USB_10118193-0001LF 13.5000      3.0375       180      "CONN RCPT USB2.0 MICRO B SMD R/A"                                                                                      
 IC1        "Diodes Inc PJ6206A" TopLayer ON_SEMI_SOT-89_H        6.7500       21.2500      90       "300mA Low quiescent current fast transient low drop out linear regulator"                                              
 D4         1N4148WS-HG3-08      TopLayer SOD323                  7.8750       8.7500       90       "SWITCHING DIODE GENPURP SOD323-H"                                                                                      
@@ -50,7 +50,7 @@ C10        120pF                TopLayer CAP_0402_1005           13.1639      20
 C9         "0.1 µF"             TopLayer CAP_0603_1608           18.8875      15.0000      270      "CAP CER 0.1UF 50V X7R 0603"                                                                                            
 C8         "4.7 µF"             TopLayer CAP_0805_2012           11.0400      35.0000      360      "CAP CER 4.7UF 50V X7S 0805"                                                                                            
 C7         "22 µF"              TopLayer CAP_0805_2012           6.9550       35.0000      180      "CAP CER 22UF 6.3V X7T 0805"                                                                                            
-C6         "22 µF"              TopLayer CAP_0805_2012           4.2500       31.3375      270      "CAP CER 22UF 6.3V X7T 0805"                                                                                            
+C6         "22 µF"              TopLayer CAP_0805_2012           4.6750       31.4500      270      "CAP CER 22UF 6.3V X7T 0805"                                                                                            
 C5         "120 pF"             TopLayer CAP_0805_2012           13.8775      31.5500      90       "CAP CER 120PF 50V C0G/NP0 0805"                                                                                        
 C4         "0.1 µF"             TopLayer CAP_0805_2012           17.7900      29.6200      360      "CAP CER 0.1UF 25V X7R 0805"                                                                                            
 C3         "10 µF"              TopLayer CAP_1206_3216_-_0.8MM   7.0000       26.7500      360      "CAP CER 10UF 25V X6S 1206"                                                                                             
