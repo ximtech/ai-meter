@@ -282,9 +282,7 @@ void app_main() {
     executeCronJob();   // send a meter photo with data if it is time
     statusLedOff();
     cleanupPhotoDirectory();    // remove old photos
-    destroyWifi();              // disconnect from Wi-Fi
     configureButtonWakeup();    // if button pressed, then need to reconfigure app settings, wakeup from sleep and start soft AP server
-    nvs_flash_deinit();
     enterTimerDeepSleep(calculateSecondsToWaitFromNow());
 }
 

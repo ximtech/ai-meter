@@ -12,6 +12,9 @@
 #include "esp_sleep.h"
 #include "esp_sntp.h"
 #include "driver/gpio.h"
+#include <driver/rtc_io.h>
+
+#include "WifiService.h"
 
 #define TIMEZONE_RULES_LENGTH (8 + 1)   // The last one rule should be empty to recognize array end value 
 

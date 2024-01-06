@@ -818,7 +818,6 @@ static esp_err_t summarySaveAjaxHandler(httpd_req_t *request) {
     storeProperties(&wlanConfig, WLAN_CONFIG_FILE);
     LOG_INFO(TAG, "All properties saved. Restarting...");
 
-    destroyWifi();
     configureButtonWakeup();
     enterTimerDeepSleep(calculateSecondsToWaitFromNow());
     return ESP_OK;

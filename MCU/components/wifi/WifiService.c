@@ -146,7 +146,7 @@ esp_err_t wifiInitSta(Properties *configProp) {
     // Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum number of re-tries (WIFI_FAIL_MAX_RETRIES_BIT)
     EventBits_t eventBits = xEventGroupWaitBits(wifiEventGroup, WIFI_CONNECTED_BIT | WIFI_FAIL_MAX_RETRIES_BIT, pdTRUE, pdFALSE, portMAX_DELAY);
 
-    // xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually happened.
+    // xEventGroupWaitBits() returns the bits before the call returned; hence we can test which event actually happened.
     if (eventBits & WIFI_FAIL_MAX_RETRIES_BIT) {
         LOG_INFO(TAG, "Failed to connect by timeout: %s", wlanInnerConfig.ssid);
         return ESP_FAIL;
@@ -347,6 +347,6 @@ static void wifiEventHandler(void* arg, esp_event_base_t eventBase, int32_t even
 
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) eventData;
         strncpy(wlanInnerConfig.ipaddress, ip4addr_ntoa((const ip4_addr_t *)&event->ip_info.ip), sizeof(wlanInnerConfig.ipaddress));
-        LOG_INFO("Assigned IP: %s", wlanInnerConfig.ipaddress);
+        LOG_INFO(TAG, "Assigned IP: %s", wlanInnerConfig.ipaddress);
     }
 }

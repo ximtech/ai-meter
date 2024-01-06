@@ -1,8 +1,5 @@
 #include "NTPTime.h"
 
-#define DEFAULT_EPOCH_FROM 1695576431
-#define DEFAULT_EPOCH_FROM_STR "1695576431"
-
 static const char *TAG = "SNTP";
 
 TimeZone timeZone = UTC;
@@ -192,6 +189,8 @@ int64_t calculateSecondsToWaitFromNow() {
 void enterTimerDeepSleep(int64_t sleepSeconds) {
     LOG_INFO(TAG, "Enabling timer wakeup, %llds", sleepSeconds);
     esp_sleep_enable_timer_wakeup(sleepSeconds * MICROS_PER_SECOND);
+    destroyWifi();              // disconnect from Wi-Fi
+    rtc_gpio_isolate(FLASH_GPIO);   // remove any current flow
     LOG_INFO(TAG, "Entering deep sleep");
     esp_deep_sleep_start();
 }
@@ -207,7 +206,7 @@ char *zonedDateTimeToStrByFormat(ZonedDateTime *zdt, const char *format) {
 ZonedDateTime zonedDateTimeNow(const TimeZone *zone) {
     time_t now;
     struct tm timeinfo;
-    setenv("TZ", "UTC0", 1);    // All system logs and data should be in UTC time zone. User specific zone will be handled separately
+    setenv("TZ", "UTC0", 1);    // All system logs and data should be in the UTC time zone. User-specific zone will be handled separately
     tzset();
     time(&now);
     localtime_r(&now, &timeinfo);

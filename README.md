@@ -26,10 +26,11 @@ handle telemetry data such as water, gas, and electricity meter readings autonom
 
 ## TODO
 
+- Create custom ESP32 cam board with low current consumption ⬜
+- File system control in an admin panel ✅
 - Tensorflow Lite integration and image recognition ⬜
 - Captive portal instead hardcoded IP for web view ⬜
 - Wi-Fi password and other sensitive data asymmetric encryption ⬜
-- File system control in an admin panel ✅
 
 ## Table of Contents
 
@@ -161,7 +162,7 @@ More info (schematic, PCB, BOM etc.) in `esp32-cam-shield` project
 ***3x4x2 mm SMD Switch 4 Pin Micro Switch Push Button***<br/>
 <img src="Images/slide-switch.png" width="120" alt="push-button">
 <img src="Images/slide-switch-dimensions.png" width="180" alt="push-button"><br/>
-***Mini Slide Switch On-OFF 2 positions, 7 pins***
+ ***Mini Slide Switch On-OFF 2 positions, 7 pins***
 
 ### Power supply
 
