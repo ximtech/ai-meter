@@ -16,7 +16,7 @@ static esp_netif_t *staNetif = NULL;
 // FreeRTOS event group to signal when we are connected
 static EventGroupHandle_t wifiEventGroup;
 
-static bool isWifiConnected = false;
+static volatile bool isWifiConnected = false;
 
 static bool initWlanConfig(Properties *configProp);
 static void wifiEventHandler(void* arg, esp_event_base_t eventBase, int32_t eventId, void* eventData);

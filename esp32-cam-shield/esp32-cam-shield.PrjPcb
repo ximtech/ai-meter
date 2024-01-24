@@ -124,6 +124,23 @@ GenerateClassCluster=0
 DocumentUniqueId=VSFOPVTT
 
 [Document6]
+DocumentPath=..\esp32-cam\TEST_POINT.PcbLib
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+GenerateClassCluster=0
+DocumentUniqueId=BDRXOGTB
+
+[Document7]
 DocumentPath=PAD_WITHOUT_HOLE_3X3.5MM.PcbLib
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -140,7 +157,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=CDBYQGBY
 
-[Document7]
+[Document8]
 DocumentPath=CH340G.SchLib
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -157,7 +174,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=ESUHWYFH
 
-[Document8]
+[Document9]
 DocumentPath=TI SOP-16 D.PcbLib
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -174,7 +191,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=RNJNKFAC
 
-[Document9]
+[Document10]
 DocumentPath=ON SEMI SOT-89 H.PcbLib
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -191,7 +208,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=YDUXEQYA
 
-[Document10]
+[Document11]
 DocumentPath=PJ6206A.SchLib
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -208,25 +225,8 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=HXZTBUNR
 
-[Document11]
-DocumentPath=TEST_POINT.PcbLib
-AnnotationEnabled=1
-AnnotateStartValue=1
-AnnotationIndexControlEnabled=0
-AnnotateSuffix=
-AnnotateScope=All
-AnnotateOrder=-1
-DoLibraryUpdate=1
-DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
-ClassGenCCAutoRoomEnabled=1
-ClassGenNCAutoScope=None
-DItemRevisionGUID=
-GenerateClassCluster=0
-DocumentUniqueId=BDRXOGTB
-
 [Document12]
-DocumentPath=TEST_POINT.SchLib
+DocumentPath=..\esp32-cam\TEST_POINT.SchLib
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
@@ -470,7 +470,7 @@ OutputDefault20=0
 [OutputGroup2]
 Name=Simulator Outputs
 Description=
-TargetPrinter=Adobe PDF
+TargetPrinter=Samsung ML-2160 Series (USB001)
 PrinterOptions=Record=PrinterOptions|Copies=1|Duplex=1|TrueTypeOptions=3|Collate=1|PrintJobKind=1|PrintWhat=1
 
 [OutputGroup3]

@@ -10,12 +10,12 @@
 
 #include "StatusLed.h"
 
-#define RSSI_NOT_CONNECTED -127
+#define RSSI_NOT_CONNECTED (-127)
 
 typedef struct WlanConfig {
     char ssid[32];
     char password[32];
-    char hostname[32];    // Default: watermeter
+    char hostname[32];
     char ipaddress[16];
     char gateway[32];
     char netmask[16];

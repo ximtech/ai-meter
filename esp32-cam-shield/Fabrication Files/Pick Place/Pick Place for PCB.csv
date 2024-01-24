@@ -4,17 +4,17 @@ C:\Users\Stason\Desktop\Projects\ESP32\ai-meter\esp32-cam-shield\.\Fabrication F
 ========================================================================================================================
 File Design Information:
 
-Date:       02.01.24
-Time:       20:40
-Revision:   d9e59299b6d42bc44744539acc0fbb68b625b2f2
+Date:       13.01.24
+Time:       19:22
+Revision:   f3315533a8772e3664cb4b3d98f8fd6046269b07
 Variant:    No variations
 Units used: mm
 
 "Designator","Comment","Layer","Footprint","Center-X(mm)","Center-Y(mm)","Rotation","Description"
 "TP10","Test point","TopLayer","TEST_POINT","22.2500","17.7250","90",""
 "R13","5 kOhms","TopLayer","RES_0603_1608","18.6555","5.7500","270","RES SMD 5K OHM 0.1% 0.15W 0603"
-"5V","Header 3","TopLayer","HDR1X3","17.9850","38.2500","180","Header, 3-Pin"
-"3.3V","Header 3","TopLayer","HDR1X3","8.4650","38.2500","360","Header, 3-Pin"
+"P4","Header 3","TopLayer","HDR1X3","17.9850","38.2500","180","Header, 3-Pin"
+"P3","Header 3","TopLayer","HDR1X3","8.4650","38.2500","360","Header, 3-Pin"
 "LED1","Bicolor 1615","TopLayer","LED_0603_1615_BICOLOR","22.5000","6.7500","360","SMD SMT Light Emitting Diode 1.6*0.8*0.6MM"
 "S1","Mini Slide Switch","TopLayer","MINI_SLIDE_SWITCH","4.7250","4.1750","180","7 Pin Mini Slide Switch On-OFF 2Position Micro Slide Toggle Switch 1P2T H=1.5MM Miniature Horizontal Slide Switch SMD"
 "S2","EVQ-P7A01P","TopLayer","EVQ-P7A01P","22.5292","3.0000","0","SWITCH TACTILE SPST-NO 0.05A 12V"

@@ -1,0 +1,11 @@
+Output: Bill of Materials
+Type  : BOM
+From  : Variant [[No Variations]] of Project [esp32-cam.PrjPcb]
+   Generated File[Bill of Materials-esp32-cam.xls]
+   Generated File[Bill of Materials-esp32-cam.xls]
+
+
+Files Generated   : 2
+Documents Printed : 0
+
+Finished Output Generation At 23:36:17 On 13.01.2024

@@ -36,7 +36,7 @@
 #endif
 
 #ifndef MAX_FILES_IN_DIR
-    #define MAX_FILES_IN_DIR 256
+    #define MAX_FILES_IN_DIR 128
 #endif
 
 typedef struct File {

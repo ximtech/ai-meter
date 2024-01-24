@@ -1,6 +1,6 @@
 #include "SoftAPServer.h"
 
-#define DEFAULT_SCAN_LIST_SIZE 20
+#define DEFAULT_SCAN_LIST_SIZE CONFIG_WIFI_PROV_SCAN_MAX_ENTRIES
 #define PIN_NUMBER_LOWER_LIMIT 1000
 #define PIN_NUMBER_UPPER_LIMIT 9999
 
@@ -322,21 +322,6 @@ esp_err_t handleFileResources(httpd_req_t *request) {
     return sendFile(request, filePath->value);
 }
 
-bool isAppFullyConfigured(Properties *configProp) {
-    bool isMeterNameSet = getProperty(configProp, PROPERTY_METER_NAME_KEY) != NULL;
-    bool isTimeZoneSet = getProperty(configProp, PROPERTY_APP_SYSTEM_TIMEZONE_KEY) != NULL;
-    bool isCameraCalibrated = getProperty(configProp, PROPERTY_FLASH_LIGHT_INTENSITY_KEY) != NULL && getProperty(configProp, PROPERTY_CALIBRATION_FOTO_KEY) != NULL;
-    bool isSchedulerConfigured = getProperty(configProp, PROPERTY_SYSTEM_CRON_EXPR_KEY) != NULL;
-    bool isSubscribedToBot = getProperty(configProp, PROPERTY_TELEGRAM_CHAT_ID_KEY) != NULL;
-
-    bool isConfigButtonPressed = propertiesHasKey(configProp, PROPERTY_ENABLE_CONFIG_KEY);
-    if (isConfigButtonPressed) {
-        LOG_INFO(TAG, "Config button pressed. Enable Soft AP server");
-    }
-
-    return isMeterNameSet && isTimeZoneSet && isCameraCalibrated && isSchedulerConfigured && isSubscribedToBot && wifiHasLogAndPassToConnect(configProp) && !isConfigButtonPressed ;
-}
-
 static esp_err_t welcomePageHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In %s handler", CSP_WELCOME_PAGE_NAME);
     char *fullMeterName = getPropertyOrDefault(&wlanConfig, PROPERTY_METER_NAME_KEY, "");
@@ -377,6 +362,7 @@ static esp_err_t calibratePageHandler(httpd_req_t *request) {
     if (!propertiesHasKey(&wlanConfig, PROPERTY_CALIBRATION_FOTO_KEY)) {
         putProperty(&wlanConfig, PROPERTY_CALIBRATION_FOTO_KEY, CALIBRATION_PHOTO_NAME);
     }
+    initLedControl();
 
     int64_t ledDuty;
     cStrToInt64(getProperty(&wlanConfig, PROPERTY_FLASH_LIGHT_INTENSITY_KEY), &ledDuty, 10);
@@ -384,7 +370,6 @@ static esp_err_t calibratePageHandler(httpd_req_t *request) {
     LOG_INFO(TAG, "Flash led range level: [%d]. Duty: [%d]", ledRange, ledDuty);
     setLedIntensity((int32_t) ledDuty);
 
-    initCamera();
     uint32_t size = cameraCaptureToFile(CALIBRATION_PHOTO_NAME);
     ASSERT_400(size > 0, "Error while taking meter photo")
 
@@ -637,7 +622,7 @@ static esp_err_t imageCaptureAjaxHandler(httpd_req_t *request) {
     setLedIntensity(ledDuty);
 
     uint32_t size = cameraCaptureToFile(CALIBRATION_PHOTO_NAME);
-    ASSERT_400(size > 0, "Error while taking meter photo");
+    ASSERT_400(size > 0, "Error while taking meter photo")
 
     putProperty(&wlanConfig, PROPERTY_FLASH_LIGHT_INTENSITY_KEY, UINT64_TO_STRING(ledDuty)->value);
     httpd_resp_sendstr(request, "/photo/" CALIBRATION_PHOTO_NAME);
@@ -818,6 +803,7 @@ static esp_err_t summarySaveAjaxHandler(httpd_req_t *request) {
     storeProperties(&wlanConfig, WLAN_CONFIG_FILE);
     LOG_INFO(TAG, "All properties saved. Restarting...");
 
+    statusLedOff();
     configureButtonWakeup();
     enterTimerDeepSleep(calculateSecondsToWaitFromNow());
     return ESP_OK;
@@ -835,14 +821,15 @@ static esp_err_t adminConfigPropertiesAjaxHandler(httpd_req_t *request) {
         BufferString *message = STRING_FORMAT_64("Unknown config file [%S]", configFileName);
         ASSERT_404(false, message->value)
     }
-    Properties *configPropCopy = LOAD_PROPERTIES(configProp->file.path);    // create the copy of original properties
-    qsort(configPropCopy->map->entries, configPropCopy->map->capacity, sizeof(MapEntry), propertyEntryKeyCompareFun);   // sort by key name prefix
+    HashMap configPropMap = getHashMapInstance(PROPERTIES_INITIAL_CAPACITY);
+    hashMapAddAll(configProp->map, configPropMap);    // create the copy of original properties
+    qsort(configPropMap->entries, configPropMap->capacity, sizeof(MapEntry), propertyEntryKeyCompareFun);   // sort by key name prefix
 
     // Map properties to Json
     JSONTokener jsonTokener = createEmptyJSONTokener();
     JSONObject rootObject = createJsonObject(&jsonTokener);
     JSONArray pairsArray = createJsonArray(&jsonTokener);
-    HashMapIterator iterator = getHashMapIterator(configPropCopy->map);
+    HashMapIterator iterator = getHashMapIterator(configPropMap);
     while (hashMapHasNext(&iterator)) {
         JSONObject keyValuePairObject = createJsonObject(&jsonTokener);
         jsonObjectPut(&keyValuePairObject, "key", (char *) iterator.key);
@@ -855,7 +842,7 @@ static esp_err_t adminConfigPropertiesAjaxHandler(httpd_req_t *request) {
     jsonObjectToString(&rootObject, buffer, ARRAY_SIZE(buffer));
 
     deleteJSONObject(&rootObject);
-    deleteConfigProperties(configPropCopy);
+    hashMapDelete(configPropMap);
     httpd_resp_set_hdr(request, "Content-Type", "application/json");
     httpd_resp_sendstr(request, buffer);
     return ESP_OK;
@@ -864,14 +851,14 @@ static esp_err_t adminConfigPropertiesAjaxHandler(httpd_req_t *request) {
 static esp_err_t adminUpdatePropertyAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In admin update property Ajax handler");
     JSONObject *rootObject = REQUEST_TO_JSON(request);
-    ASSERT_400(rootObject != NULL, "Invalid json");
+    ASSERT_400(rootObject != NULL, "Invalid json")
 
     char *configFileName = trimString(getJsonObjectString(rootObject, "propertyFileName"));
-    ASSERT_JSON_VAL(rootObject, "propertyFileName");
+    ASSERT_JSON_VAL(rootObject, "propertyFileName")
     LOG_INFO(TAG, "Config file name: [%s]", configFileName);
 
     char *propertyKey = trimString(getJsonObjectString(rootObject, "key"));
-    ASSERT_JSON_VAL(rootObject, "key");
+    ASSERT_JSON_VAL(rootObject, "key")
     LOG_INFO(TAG, "Config key: [%s]", propertyKey);
 
     char *propertyValue = trimString(getJsonObjectString(rootObject, "value")); // no need to validate, can be empty
@@ -893,14 +880,14 @@ static esp_err_t adminUpdatePropertyAjaxHandler(httpd_req_t *request) {
 static esp_err_t adminRemovePropertyAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In admin remove property Ajax handler");
     JSONObject *rootObject = REQUEST_TO_JSON(request);
-    ASSERT_400(rootObject != NULL, "Invalid json");
+    ASSERT_400(rootObject != NULL, "Invalid json")
 
     char *configFileName = trimString(getJsonObjectString(rootObject, "propertyFileName"));
-    ASSERT_JSON_VAL(rootObject, "propertyFileName");
+    ASSERT_JSON_VAL(rootObject, "propertyFileName")
     LOG_INFO(TAG, "Config file name: [%s]", configFileName);
 
     char *propertyKey = trimString(getJsonObjectString(rootObject, "key"));
-    ASSERT_JSON_VAL(rootObject, "key");
+    ASSERT_JSON_VAL(rootObject, "key")
     LOG_INFO(TAG, "Config key to remove: [%s]", propertyKey);
 
     Properties *configProp = getPropertiesByFileName(configFileName);
@@ -922,7 +909,7 @@ static esp_err_t adminGetLogContentsAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In admin log content Ajax handler");
     BufferString *uriStr = NEW_STRING(HTTPD_MAX_URI_LEN, request->uri);
     BufferString *logFileName = SUBSTRING_AFTER(64, uriStr, "logFileName=");
-    ASSERT_400(isBuffStringNotEmpty(logFileName) == true, "Empty log file name");
+    ASSERT_400(isBuffStringNotEmpty(logFileName) == true, "Empty log file name")
     LOG_DEBUG(TAG, "Log file name: [%s]", logFileName->value);
 
     char *logFilePath = getPropertyOrDefault(&appConfig, PROPERTY_LOG_FILE_PATH_KEY, DEFAULT_LOG_FILE_PATH);
@@ -954,7 +941,7 @@ static esp_err_t adminGetLogContentsAjaxHandler(httpd_req_t *request) {
 static esp_err_t adminCleanLogFileAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In admin delete log file Ajax handler");
     JSONObject *rootObject = REQUEST_TO_JSON(request);
-    ASSERT_400(rootObject != NULL, "Invalid json");
+    ASSERT_400(rootObject != NULL, "Invalid json")
 
     char *logFileName = trimString(getJsonObjectString(rootObject, "logFileName"));
     ASSERT_JSON_VAL(rootObject, "logFileName");

@@ -51,16 +51,16 @@ void powerResetCamera() {
     LOG_DEBUG(TAG, "Resetting camera by power down line");
     gpio_config_t conf;
     conf.intr_type = GPIO_INTR_DISABLE;
-    conf.pin_bit_mask = 1LL << GPIO_NUM_32;
+    conf.pin_bit_mask = 1LL << PERIPHERAL_POWER_GPIO;
     conf.mode = GPIO_MODE_OUTPUT;
     conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
     conf.pull_up_en = GPIO_PULLUP_DISABLE;
     gpio_config(&conf);
 
     // carefull, logic is inverted compared to reset pin
-    gpio_set_level(GPIO_NUM_32, 1);
+    gpio_set_level(PERIPHERAL_POWER_GPIO, 1);
     vTaskDelay(1000 / portTICK_PERIOD_MS);
-    gpio_set_level(GPIO_NUM_32, 0);
+    gpio_set_level(PERIPHERAL_POWER_GPIO, 0);
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 }
 
@@ -80,6 +80,23 @@ esp_err_t initCamera() {
     return cameraStatus;
 }
 
+esp_err_t initCameraWithRetry(uint8_t cameraInitTry) {
+    // Init camera, try several times if no success from the first try
+    esp_err_t cameraStatus;
+    do {
+        powerResetCamera();
+        cameraStatus = initCamera();
+        flashLightOff();
+        cameraInitTry--;
+
+        TickType_t xDelay = 2000;
+        LOG_DEBUG(TAG, "After camera initialization: sleep for: %ldms", xDelay);
+        vTaskDelay(pdMS_TO_TICKS(xDelay));
+    } while (cameraInitTry > 0 && cameraStatus != ESP_OK);
+
+    return cameraStatus;
+}
+
 void initLedControl() {
 #ifdef USE_PWM_LED_FLASH
     // Prepare and then apply the LEDC PWM timer configuration
@@ -88,7 +105,7 @@ void initLedControl() {
     ledControlTimer.speed_mode       = LEDC_MODE;
     ledControlTimer.timer_num        = LEDC_TIMER;
     ledControlTimer.duty_resolution  = LEDC_DUTY_RES;
-    ledControlTimer.freq_hz          = LEDC_FREQUENCY;   // Set output frequency at 5 kHz
+    ledControlTimer.freq_hz          = LEDC_FREQUENCY;   // Set output frequency
     ledControlTimer.clk_cfg          = LEDC_AUTO_CLK;
 
     ESP_ERROR_CHECK(ledc_timer_config(&ledControlTimer));

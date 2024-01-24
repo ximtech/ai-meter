@@ -23,5 +23,3 @@ esp_err_t handleHtmlResources(httpd_req_t *request);
 esp_err_t handlePhotoResources(httpd_req_t *request);
 esp_err_t handleFileResources(httpd_req_t *request);
 esp_err_t handleErrorPage(httpd_req_t *request, httpd_err_code_t error);
-
-bool isAppFullyConfigured(Properties *configProp);

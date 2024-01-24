@@ -39,7 +39,7 @@ Properties *loadProperties(Properties *properties, const char *fileName) {
         return properties;
     }
 
-    File *propertyFile = newFile(&properties->file, fileName);
+    File *propertyFile = NEW_FILE(fileName);
     if (!isFileExists(propertyFile)) {
         properties->status = CONFIG_PROP_ERROR_FILE_NOT_FOUND;
         return properties;
@@ -54,8 +54,8 @@ Properties *loadProperties(Properties *properties, const char *fileName) {
 
     uint32_t dataLength = readFileToBuffer(propertyFile, dataBuffer, fileSize);
     if (dataLength != fileSize) {
-        free(dataBuffer);
         properties->status = CONFIG_PROP_ERROR_READ_FILE;
+        free(dataBuffer);
         return properties;
     }
 
@@ -105,7 +105,7 @@ void storeProperties(Properties *properties, const char *fileName) {
         return;
     }
 
-    File *propertyFile = newFile(&properties->file, fileName);
+    File *propertyFile = NEW_FILE(fileName);
     if (propertyFile == NULL || !createFile(propertyFile)) {
         properties->status = CONFIG_PROP_ERROR_CREATE_FILE;
         return;

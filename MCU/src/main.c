@@ -65,6 +65,7 @@ static bool adcCalibrationInit(adc_unit_t unit, adc_channel_t channel, adc_atten
 static void adcCalibrationDeinit(adc_cali_handle_t handle);
 
 static int calculateBatteryPercentage(int dividerVoltage);
+static bool isAppFullyConfigured();
 static void executeCronJob();
 static void cleanupPhotoDirectory();
 static int fileDateCompareFunction (const void *one, const void *two);
@@ -88,18 +89,7 @@ void app_main() {
     gpio_reset_pin(CONFIG_START_GPIO);
 
     // Init camera, try several times if no success from the first try
-    esp_err_t cameraStatus;
-    uint8_t cameraInitTry = 3;
-    do {
-        powerResetCamera();
-        cameraStatus = initCamera();
-        flashLightOff();
-        cameraInitTry--;
-
-        TickType_t xDelay = 2000;
-        LOG_DEBUG(TAG, "After camera initialization: sleep for: %ldms", xDelay);
-        vTaskDelay(pdMS_TO_TICKS(xDelay));
-    } while (cameraInitTry > 0 && cameraStatus != ESP_OK);
+    esp_err_t cameraStatus = initCameraWithRetry(CAMERA_INIT_TRY_COUNT);
 
     SDCardStatus cardStatus = initNvsSDCard();
     if (cardStatus != SD_CARD_OK) {
@@ -157,7 +147,6 @@ void app_main() {
         bool isConsoleLogEnabled = isStringEquals(getPropertyOrDefault(&appConfig, PROPERTY_LOG_CONSOLE_ENABLED_KEY, "false"), "true");
         if (!isConsoleLogEnabled) {
             LOG_INFO(TAG, "At this point console log will be disabled");
-            esp_log_level_set("*", ESP_LOG_NONE);
             loggerUnsubscribe(consoleLogger);     // Console logger doesn't need this anymore, all logs will be stored in a log file
         }
         LOG_INFO(TAG, "\nLog file directory: [%s]\n "
@@ -178,8 +167,8 @@ void app_main() {
     LOG_INFO(TAG, "=================================================");
 
     LOG_INFO("Restart reason: [%s]", getResetReason());
-    bool isButtonWakeup = esp_reset_reason() == ESP_RST_DEEPSLEEP && esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT0;
-    if (isButtonWakeup) {
+    bool isWakeupButtonPressed = (esp_reset_reason() == ESP_RST_DEEPSLEEP) && (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT0);
+    if (isWakeupButtonPressed) {
         LOG_INFO(TAG, "Config GPIO Button was pressed. Enabling Soft AP configuration server");
         putProperty(&wlanConfig, PROPERTY_ENABLE_CONFIG_KEY, "true");
     }
@@ -262,11 +251,11 @@ void app_main() {
         }
     }
 
-    if (!isAppFullyConfigured(&wlanConfig) || !isWifiHasConnection()) { // Not configured or button pressed, then enable soft AP server
+    if (!isAppFullyConfigured() || isWakeupButtonPressed || !isWifiHasConnection()) { // Not configured or button pressed, then enable soft AP server
         LOG_INFO(TAG, "Starting access point for remote configuration");
         wifiInitSoftAp(&appConfig);
         startWebServerAP();
-        statusLed(AP_OR_OTA_ENABLED, 2, true);
+//        statusLed(AP_OR_OTA_ENABLED, 2, true);
         while(true) { // wait until reboot
             vTaskDelay(pdMS_TO_TICKS(1000));
         }
@@ -416,6 +405,15 @@ static int calculateBatteryPercentage(int dividerVoltage) {
     } else {
         return battPercentage;
     }
+}
+
+static bool isAppFullyConfigured() {
+    bool isMeterNameSet = getProperty(&wlanConfig, PROPERTY_METER_NAME_KEY) != NULL;
+    bool isTimeZoneSet = getProperty(&wlanConfig, PROPERTY_APP_SYSTEM_TIMEZONE_KEY) != NULL;
+    bool isCameraCalibrated = getProperty(&wlanConfig, PROPERTY_FLASH_LIGHT_INTENSITY_KEY) != NULL && getProperty(&wlanConfig, PROPERTY_CALIBRATION_FOTO_KEY) != NULL;
+    bool isSchedulerConfigured = getProperty(&wlanConfig, PROPERTY_SYSTEM_CRON_EXPR_KEY) != NULL;
+    bool isSubscribedToBot = getProperty(&wlanConfig, PROPERTY_TELEGRAM_CHAT_ID_KEY) != NULL;
+    return isMeterNameSet && isTimeZoneSet && isCameraCalibrated && isSchedulerConfigured && isSubscribedToBot;
 }
 
 static void executeCronJob() {

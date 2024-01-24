@@ -20,9 +20,10 @@
 
 #define HIDE_PASSWORD   // hide password from wlan.properties in log
 
-#define FLASH_GPIO          GPIO_NUM_4
-#define BLINK_GPIO          GPIO_NUM_0
-#define CONFIG_START_GPIO   GPIO_NUM_0
+#define FLASH_GPIO              GPIO_NUM_4
+#define BLINK_GPIO              GPIO_NUM_0
+#define CONFIG_START_GPIO       GPIO_NUM_0
+#define PERIPHERAL_POWER_GPIO   GPIO_NUM_32
 
 #define OLDEST_PHOTOS_TO_REMOVE_COUNT 16
 

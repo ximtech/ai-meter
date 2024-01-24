@@ -1,0 +1,60 @@
+Altium Designer Pick and Place Locations
+C:\Users\Stason\Desktop\Projects\ESP32\ai-meter\esp32-cam\.\Fabrication Files\Pick Place\Pick Place for PCB.txt
+
+========================================================================================================================
+File Design Information:
+
+Date:       13.01.24
+Time:       23:35
+Revision:   Not in VersionControl
+Variant:    No variations
+Units used: mm
+
+Designator Comment                        Layer       Footprint             Center-X(mm) Center-Y(mm) Rotation Description                                                        
+TP3        PER_VCC                        BottomLayer TEST_POINT            13.7000      36.6000      90       ""                                                                 
+TP5        1.2V                           TopLayer    TEST_POINT            8.0000       4.5000       90       ""                                                                 
+TP4        2.8V                           TopLayer    TEST_POINT            16.5650      4.4999       90       ""                                                                 
+TP2        VCC                            BottomLayer TEST_POINT            2.2500       5.4000       90       ""                                                                 
+TP1        PWDN                           TopLayer    TEST_POINT            12.8701      4.4999       90       ""                                                                 
+S1         EVQ-P7A01P                     BottomLayer EVQ-P7A01P            5.6080       37.7900      360      "SWITCH TACTILE SPST-NO 0.05A 12V"                                 
+R16        "10 kOhms"                     BottomLayer RES_0603_1608         8.7500       29.8750      90       "RES SMD 10K OHM 1% 1/10W 0603"                                    
+R15        "1 kOhms"                      BottomLayer RES_0603_1608         16.4500      34.5000      180      "RES SMD 1K OHM 1% 1/10W 0603"                                     
+R14        "10 kOhms"                     BottomLayer RES_0603_1608         13.5500      34.5000      360      "RES SMD 10K OHM 1% 1/10W 0603"                                    
+R13        "47 kOhms"                     TopLayer    RES_0603_1608         12.6750      21.6000      90       "RES SMD 47K OHM 1% 1/10W 0603"                                    
+R12        "10 kOhms"                     BottomLayer RES_0603_1608         1.6400       37.8600      270      "RES SMD 10K OHM 1% 1/10W 0603"                                    
+R11        "47 kOhms"                     TopLayer    RES_0603_1608         11.0000      21.6000      90       "RES SMD 47K OHM 1% 1/10W 0603"                                    
+R10        "47 kOhms"                     TopLayer    RES_0603_1608         18.3009      21.6000      90       "RES SMD 47K OHM 1% 1/10W 0603"                                    
+R9         "47 kOhms"                     TopLayer    RES_0603_1608         16.5750      21.6000      90       "RES SMD 47K OHM 1% 1/10W 0603"                                    
+R8         "47 kOhms"                     TopLayer    RES_0603_1608         14.4000      21.6000      90       "RES SMD 47K OHM 1% 1/10W 0603"                                    
+R7         "4.7 kOhms"                    TopLayer    RES_0603_1608         3.5363       13.8652      270      "RES SMD 4.7K OHM 1% 1/10W 0603"                                   
+R6         "10 kOhms"                     TopLayer    RES_0603_1608         21.8000      11.0000      360      "RES SMD 10K OHM 1% 1/10W 0603"                                    
+R5         "10 kOhms"                     BottomLayer RES_0603_1608         21.7657      28.6987      360      "RES SMD 10K OHM 1% 1/10W 0603"                                    
+R4         "1 kOhms"                      TopLayer    RES_0603_1608         22.9208      20.8918      270      "RES SMD 1K OHM 1% 1/10W 0603"                                     
+R3         "4.7 kOhms"                    TopLayer    RES_0603_1608         6.2500       21.6000      90       "RES SMD 4.7K OHM 1% 1/10W 0603"                                   
+R2         "4.7 kOhms"                    TopLayer    RES_0603_1608         8.0000       21.6000      90       "RES SMD 4.7K OHM 1% 1/10W 0603"                                   
+R1         "4.7 kOhms"                    TopLayer    RES_0603_1608         4.3328       21.6000      90       "RES SMD 4.7K OHM 1% 1/10W 0603"                                   
+Q1         "S8050 SOT-23-3"               TopLayer    MCCSEMI_SOT-23-3      25.1000      13.9000      90       "TRANS NPN 25V 1.5A SOT23"                                         
+P2         "Header 8"                     TopLayer    HDR1X8                24.7500      25.8100      270      "Header, 8-Pin"                                                    
+P1         "Header 8"                     TopLayer    HDR1X8                2.2500       25.8100      270      "Header, 8-Pin"                                                    
+J2         "Micro SD Socket"              TopLayer    OOTDTY_Y98E7HH800293  13.5000      30.4000      180      ""                                                                 
+J1         "OV2640 FPC 24pin"             TopLayer    GCT_FFC2B28-24        13.4875      13.1250      180      ""                                                                 
+IC5        XC6206                         TopLayer    TI_SOT-23-3_DBZ       9.1850       8.2500       180      "Linear Voltage Regulator IC Positive Fixed 1 Output 150mA SOT-23" 
+IC4        ESP-PSRAM64H                   BottomLayer ALPHAOMEGA_SO8_SOP-8L 14.8300      30.8100      180      "PSRAM (Pseudo SRAM) Memory IC 64Mbit SPI 133 MHz 8-SOIC"          
+IC3        XC6206                         TopLayer    TI_SOT-23-3_DBZ       17.7500      8.2500       180      "Linear Voltage Regulator IC Positive Fixed 1 Output 150mA SOT-23" 
+IC2        Si2301DS                       BottomLayer DIODES_SOT-23-3       16.5300      37.2100      270      ""                                                                 
+IC1        ESP-32S                        BottomLayer ESP32S                13.3500      17.0050      360      "WiFi-BT-BLE MCU module"                                           
+D1         "LED MID PWR 5600K 95CRI 3030" TopLayer    LUMINUS_MP-3030-110   25.3600      10.5000      360      "LED MID PWR 5600K 95CRI 3030"                                     
+C14        "0.1 µF"                       TopLayer    CAP_0805_2012         4.1000       8.2500       90       "CAP CER 0.1UF 100V X7R 0805"                                      
+C13        "10 µF"                        TopLayer    CAP_0805_2012         6.2500       8.2500       90       "CAP CER 10UF 16V 0805"                                            
+C12        "1 µF"                         BottomLayer CAP_0805_2012         8.7500       33.3000      270      "CAP CER 1UF 25V Y5V 0805"                                         
+C11        "10 µF"                        BottomLayer CAP_0805_2012         5.9000       28.2000      360      "CAP CER 10UF 16V 0805"                                            
+C10        "100 µF"                       BottomLayer CAP_POL_1411_3528     5.2500       32.3500      270      "CAP TANT 100UF 20% 6.3V 1411"                                     
+C9         "10 µF"                        BottomLayer CAP_0805_2012         22.0000      37.7000      180      "CAP CER 10UF 16V 0805"                                            
+C8         "100 µF"                       BottomLayer CAP_POL_1411_3528     21.7500      32.3500      270      "CAP TANT 100UF 20% 6.3V 1411"                                     
+C7         "0.1 µF"                       TopLayer    CAP_0805_2012         12.5850      8.1452       90       "CAP CER 0.1UF 100V X7R 0805"                                      
+C6         "10 µF"                        TopLayer    CAP_0805_2012         14.7250      8.1452       90       "CAP CER 10UF 16V 0805"                                            
+C5         "0.1 µF"                       BottomLayer CAP_0805_2012         10.5500      38.0000      180      "CAP CER 0.1UF 100V X7R 0805"                                      
+C4         "0.1 µF"                       TopLayer    CAP_0805_2012         23.7150      7.4501       360      "CAP CER 0.1UF 100V X7R 0805"                                      
+C3         "0.1 µF"                       TopLayer    CAP_0805_2012         1.9500       8.2500       270      "CAP CER 0.1UF 100V X7R 0805"                                      
+C2         "15 pF"                        TopLayer    CAP_0805_2012         20.9000      8.2501       270      "CAP CER 15PF 250V C0G/NP0 0805"                                   
+C1         "0.1 µF"                       BottomLayer CAP_0805_2012         2.2500       8.5500       270      "CAP CER 0.1UF 100V X7R 0805"                                      

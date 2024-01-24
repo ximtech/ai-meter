@@ -6,7 +6,6 @@ TimeZone timeZone = UTC;
 static TimeZoneRule TIMEZONE_RULES[TIMEZONE_RULES_LENGTH] = {0};
 
 static bool isNtpTimeEnabled = true;
-static bool isTimeWasNotSetAtBoot = false;
 static bool isTimeWasNotSetAtBootPrintStartBlock = false;
 static char buffer[128] = {0};
 
@@ -54,7 +53,6 @@ bool setupNtpTime() {
         LOG_WARN(TAG, "The local time is unknown, starting with: [%s]", formattedTime);
         if (isNtpTimeEnabled) {
             LOG_INFO(TAG, "Once the NTP server provides a time, we will switch to that one");
-            isTimeWasNotSetAtBoot = true;
             isTimeWasNotSetAtBootPrintStartBlock = true;
         }
     }
@@ -68,10 +66,6 @@ bool isProjectTimeSet() {
     localtime_r(&now, &timeinfo);
     // Is time set? If not, tm_year will be (1970 - 1900).
     return (timeinfo.tm_year < (2023 - 1900)) ? false : true;
-}
-
-bool isProjectTimeWasNotSetAtBoot() {
-    return isTimeWasNotSetAtBoot;
 }
 
 bool isNtpTimeSyncEnabled() {
@@ -150,7 +144,7 @@ void loadTimezoneHistoricRules(TimeZone *userTimeZone) {
     }
 
     ZonedDateTime zDateTime = zonedDateTimeNow(userTimeZone);
-    zonedDateTimeMinusYears(&zDateTime, 1);   // move back for one year for transition gap
+    zonedDateTimeMinusYears(&zDateTime, 1);   // move back for one year for a transition gap
     int64_t fromEpoch = dateTimeToEpochSecond(&zDateTime.dateTime, zDateTime.offset);
 
     LOG_INFO(TAG, "Fetching timezone: %s, DST historic rules", userTimeZone->id);
@@ -190,7 +184,6 @@ void enterTimerDeepSleep(int64_t sleepSeconds) {
     LOG_INFO(TAG, "Enabling timer wakeup, %llds", sleepSeconds);
     esp_sleep_enable_timer_wakeup(sleepSeconds * MICROS_PER_SECOND);
     destroyWifi();              // disconnect from Wi-Fi
-    rtc_gpio_isolate(FLASH_GPIO);   // remove any current flow
     LOG_INFO(TAG, "Entering deep sleep");
     esp_deep_sleep_start();
 }

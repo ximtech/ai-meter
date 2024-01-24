@@ -193,10 +193,6 @@ uint32_t getSDCardSectorSize() {
     return sdCardCsd.sector_size;
 }
 
-bool SDCardCheckMandatoryFilePresence() {
-    return true;
-}
-
 void logSDCardInformation() {
     uint32_t cardPartitionSize = getSDCardPartitionSize();
     uint32_t cardFreePartitionSpace = getSDCardFreePartitionSpace();

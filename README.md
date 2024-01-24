@@ -159,10 +159,13 @@ More info (schematic, PCB, BOM etc.) in `esp32-cam-shield` project
 
 - For current housing, push button and switch should be used as follows:<br/>
 <img src="Images/push_button.png" width="70" alt="push-button"><br/>
-***3x4x2 mm SMD Switch 4 Pin Micro Switch Push Button***<br/>
+
+#### 3x4x2 mm SMD Switch 4 Pin Micro Switch Push Button
+
 <img src="Images/slide-switch.png" width="120" alt="push-button">
 <img src="Images/slide-switch-dimensions.png" width="180" alt="push-button"><br/>
- ***Mini Slide Switch On-OFF 2 positions, 7 pins***
+
+#### Mini Slide Switch On-OFF 2 positions, 7 pins
 
 ### Power supply
 

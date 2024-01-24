@@ -21,7 +21,6 @@
 bool setupNtpTime();
 
 bool isProjectTimeSet();
-bool isProjectTimeWasNotSetAtBoot();
 
 void setupUserTimeZone();
 TimeZone findTimeZoneInDb(const char *zoneId);

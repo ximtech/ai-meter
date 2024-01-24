@@ -14,6 +14,8 @@
 
 #include "StatusLed.h"
 
+#define CAMERA_INIT_TRY_COUNT 3
+
 #if defined(CAMERA_CONFIG_FRAMESIZE_VGA)
     static const framesize_t FRAME_SIZE = FRAMESIZE_VGA;
 	#define FRAMESIZE_STRING "640x480"
@@ -37,6 +39,7 @@
 
 void powerResetCamera();
 esp_err_t initCamera();
+esp_err_t initCameraWithRetry(uint8_t cameraInitTry);
 
 void initLedControl();
 bool testCamera();
