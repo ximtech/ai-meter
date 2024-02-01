@@ -103,6 +103,7 @@
 <script src="/assets/js/jquery.validate.min.js"></script>
 <script src="/assets/js/popper.min.js"></script>
 <script src="/assets/js/bootstrap.bundle.js"></script>
+<script src="/assets/js/jsencrypt.min.js"></script>
 
 <script>
     $("#backSvgButton").on("click", function (event) {
@@ -117,6 +118,13 @@
     const canvas = new bootstrap.Offcanvas("#offcanvasPass");
     let isConnectionAvailable = true;
 	let redirectUrl = "";
+    const encryptor = new JSEncrypt();
+
+    $( document ).ready(function() {    // Setup encryption key
+        $.get("/encryption/key", function (data) {
+            encryptor.setPublicKey(data);
+        });
+    });
 
     function fnBlink() {
         $("#headerWifiSvgId").fadeOut(1000);
@@ -221,8 +229,9 @@
             "       role=\"status\" " +
             "       aria-hidden=\"true\"></span></span>"
         );
-		
-        $.post("/save/wifi", JSON.stringify({ ssid: wifiNameId, password: wifiPassword}), function (data) {
+
+        const encryptedPassword = encryptor.encrypt(wifiPassword);
+        $.post("/save/wifi", JSON.stringify({ ssid: wifiNameId, password: encryptedPassword}), function (data) {
 			redirectUrl = "/calibrate";
 			handleSuccessConnection(wifiNameId);
 

@@ -75,7 +75,6 @@ CONFIG_BF3005_SUPPORT=n
 
 
 #only necessary for task analysis (include/defines.h -> TASK_ANALYSIS_ON)
-#set in [env:esp32cam-dev-task-analysis]
 #CONFIG_FREERTOS_USE_TRACE_FACILITY=1
 #CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS=y
 #CONFIG_FREERTOS_VTASKLIST_INCLUDE_COREID=y

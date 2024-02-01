@@ -39,6 +39,7 @@ static esp_err_t adminDirectoryContentsAjaxHandler(httpd_req_t *request);
 static esp_err_t deleteFileAjaxHandler(httpd_req_t *request);
 static esp_err_t uploadFileAjaxHandler(httpd_req_t *request);
 static esp_err_t restartEspAjaxHandler(httpd_req_t *request);
+static esp_err_t publicEncryptionKeyAjaxHandler(httpd_req_t *request);
 
 static CspObjectArray *mapApRecordsToList(wifi_ap_record_t *apRecords, uint16_t length);
 static int apRecordComparator(const void *v1, const void *v2);
@@ -82,12 +83,12 @@ httpd_handle_t startWebServerAP() {
     }
 
     // Page handlers 
-    httpd_uri_t welcomPageUri = {
+    httpd_uri_t welcomePageUri = {
             .uri = "/",
             .method = HTTP_GET,
             .handler = welcomePageHandler,
             .user_ctx = NULL};
-    httpd_register_uri_handler(server, &welcomPageUri);
+    httpd_register_uri_handler(server, &welcomePageUri);
 
     httpd_uri_t connectPageUri = {
             .uri = "/connect",
@@ -251,6 +252,13 @@ httpd_handle_t startWebServerAP() {
             .user_ctx = NULL};
     httpd_register_uri_handler(server, &restartEspUri);
 
+    httpd_uri_t publicEncryptionKeyUri = {
+            .uri = "/encryption/key",
+            .method = HTTP_GET,
+            .handler = publicEncryptionKeyAjaxHandler,
+            .user_ctx = NULL};
+    httpd_register_uri_handler(server, &publicEncryptionKeyUri);
+
     httpd_uri_t resourcesUri = {
             .uri = "/assets/*",
             .method = HTTP_GET,
@@ -322,6 +330,15 @@ esp_err_t handleFileResources(httpd_req_t *request) {
     return sendFile(request, filePath->value);
 }
 
+bool isAppFullyConfigured(Properties *configProp) {
+    bool isMeterNameSet = getProperty(configProp, PROPERTY_METER_NAME_KEY) != NULL;
+    bool isTimeZoneSet = getProperty(configProp, PROPERTY_APP_SYSTEM_TIMEZONE_KEY) != NULL;
+    bool isCameraCalibrated = getProperty(configProp, PROPERTY_FLASH_LIGHT_INTENSITY_KEY) != NULL && getProperty(configProp, PROPERTY_CALIBRATION_FOTO_KEY) != NULL;
+    bool isSchedulerConfigured = getProperty(configProp, PROPERTY_SYSTEM_CRON_EXPR_KEY) != NULL;
+    bool isSubscribedToBot = getProperty(configProp, PROPERTY_TELEGRAM_CHAT_ID_KEY) != NULL;
+    return isMeterNameSet && isTimeZoneSet && isCameraCalibrated && isSchedulerConfigured && isSubscribedToBot;
+}
+
 static esp_err_t welcomePageHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In %s handler", CSP_WELCOME_PAGE_NAME);
     char *fullMeterName = getPropertyOrDefault(&wlanConfig, PROPERTY_METER_NAME_KEY, "");
@@ -362,7 +379,7 @@ static esp_err_t calibratePageHandler(httpd_req_t *request) {
     if (!propertiesHasKey(&wlanConfig, PROPERTY_CALIBRATION_FOTO_KEY)) {
         putProperty(&wlanConfig, PROPERTY_CALIBRATION_FOTO_KEY, CALIBRATION_PHOTO_NAME);
     }
-    initLedControl();
+    initLedControl();   // TODO: Remove this redundant initialization with updated board design
 
     int64_t ledDuty;
     cStrToInt64(getProperty(&wlanConfig, PROPERTY_FLASH_LIGHT_INTENSITY_KEY), &ledDuty, 10);
@@ -514,8 +531,9 @@ static esp_err_t saveWifiCredentialsAjaxHandler(httpd_req_t *request) {
 
     char *ssid = getJsonObjectString(rootObject, "ssid");
     ASSERT_JSON_VAL(rootObject, "ssid");
-    char *password = getJsonObjectOptString(rootObject, "password", "");   // pass can be empty for open AP
-    
+    char *encryptedPassword = getJsonObjectOptString(rootObject, "password", "");   // pass can be empty for open AP
+    BufferString *password = decryptBase64Text(encryptedPassword, EMPTY_STRING(256));
+
     // set optional parameters if present
     char *ip = getJsonObjectOptString(rootObject, "ip", "");
     char *gateway = getJsonObjectOptString(rootObject, "gateway", "");
@@ -523,7 +541,7 @@ static esp_err_t saveWifiCredentialsAjaxHandler(httpd_req_t *request) {
     char *dns = getJsonObjectOptString(rootObject, "netmask", "");
 
     putProperty(&wlanConfig, PROPERTY_WIFI_SSID_KEY, ssid);
-    putProperty(&wlanConfig, PROPERTY_WIFI_PASSWORD_KEY, password);
+    putProperty(&wlanConfig, PROPERTY_WIFI_PASSWORD_KEY, stringValue(password));
     putProperty(&wlanConfig, PROPERTY_WIFI_IP_KEY, ip);
     putProperty(&wlanConfig, PROPERTY_WIFI_GATEWAY_KEY, gateway); 
     putProperty(&wlanConfig, PROPERTY_WIFI_NETMASK_KEY, netmask);
@@ -537,7 +555,7 @@ static esp_err_t saveWifiCredentialsAjaxHandler(httpd_req_t *request) {
             ASSERT_400(false, message->value)
         }
     }
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(1000));
 
     char *geolocationEnabledStr = getPropertyOrDefault(&appConfig, PROPERTY_IP_GEOLOCATION_ENABLED_KEY, "false");
     bool isTimeZoneSet = getProperty(&wlanConfig, PROPERTY_APP_SYSTEM_TIMEZONE_KEY) != NULL; // can be already set in summary
@@ -717,7 +735,7 @@ static esp_err_t telegramMessageAjaxHandler(httpd_req_t *request) {
 static esp_err_t timeZoneSearchAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In time zone search Ajax handler");
     JSONObject *rootObject = REQUEST_TO_JSON(request);
-    ASSERT_400(rootObject != NULL, "Invalid json");
+    ASSERT_400(rootObject != NULL, "Invalid json")
 
     char *zoneName = trimString(getJsonObjectString(rootObject, "zoneName"));
     ASSERT_JSON_VAL(rootObject, "zoneName");
@@ -757,7 +775,7 @@ static esp_err_t timeZoneSearchAjaxHandler(httpd_req_t *request) {
 static esp_err_t timeZoneSaveAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In time zone save Ajax handler");
     JSONObject *rootObject = REQUEST_TO_JSON(request);
-    ASSERT_400(rootObject != NULL, "Invalid json");
+    ASSERT_400(rootObject != NULL, "Invalid json")
 
     char *zoneName = trimString(getJsonObjectString(rootObject, "timeZone"));
     ASSERT_JSON_VAL(rootObject, "timeZone");
@@ -779,18 +797,8 @@ static esp_err_t timeZoneSaveAjaxHandler(httpd_req_t *request) {
 
 static esp_err_t summarySaveAjaxHandler(httpd_req_t *request) {
     LOG_DEBUG(TAG, "In summary save Ajax handler");
-    bool isMeterNameSet = getProperty(&wlanConfig, PROPERTY_METER_NAME_KEY) != NULL;
-    bool isTimeZoneSet = getProperty(&wlanConfig, PROPERTY_APP_SYSTEM_TIMEZONE_KEY) != NULL;
-    bool isCameraCalibrated = getProperty(&wlanConfig, PROPERTY_FLASH_LIGHT_INTENSITY_KEY) != NULL && getProperty(&wlanConfig, PROPERTY_CALIBRATION_FOTO_KEY) != NULL;
-    bool isSchedulerConfigured = getProperty(&wlanConfig, PROPERTY_SYSTEM_CRON_EXPR_KEY) != NULL;
-    bool isSubscribedToBot = getProperty(&wlanConfig, PROPERTY_TELEGRAM_CHAT_ID_KEY) != NULL;
-
-    ASSERT_400(isMeterNameSet == true, "Meter name is not set");
-    ASSERT_400(isWifiHasConnection() == true, "Device is not connected to Wi-Fi");
-    ASSERT_400(isTimeZoneSet == true, "Time zone is not set");
-    ASSERT_400(isCameraCalibrated == true, "Camera is not calibrated");
-    ASSERT_400(isSchedulerConfigured == true, "Scheduler is not set");
-    ASSERT_400(isSubscribedToBot == true, "Telegram subscription is not configured");
+    bool isAppConfigured = isAppFullyConfigured(&wlanConfig);
+    ASSERT_400(isAppConfigured == true, "Device not configured properly");
 
     ZonedDateTime zdtNow = zonedDateTimeNow(&timeZone);
     char buffer[32];
@@ -1071,6 +1079,18 @@ static esp_err_t restartEspAjaxHandler(httpd_req_t *request) {
     destroyWifi(); // disconnect from Wi-Fi
     LOG_INFO(TAG, "All properties saved. Restarting...");
     esp_restart();
+}
+
+static esp_err_t publicEncryptionKeyAjaxHandler(httpd_req_t *request) {
+    LOG_DEBUG(TAG, "In public encryption key Ajax handler");
+    size_t keyLength = 0;
+    char *publicKeyString = (char *) getPublicKeyString(&keyLength);
+    ASSERT_500(publicKeyString != NULL, "Failed to fetch public encryption key string")
+
+    httpd_resp_set_hdr(request, "Cache-Control", "max-age=36000");
+    httpd_resp_sendstr(request, publicKeyString);
+    mbedtls_free(publicKeyString);
+    return ESP_OK;
 }
 
 static CspObjectArray *mapApRecordsToList(wifi_ap_record_t *apRecords, uint16_t length) {

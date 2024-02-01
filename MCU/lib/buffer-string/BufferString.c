@@ -421,7 +421,7 @@ BufferString *substringCStrFrom(char *source, BufferString *destination, uint32_
 BufferString *substringCStrFromTo(char *source, BufferString *destination, uint32_t beginIndex, uint32_t endIndex) {
     if (source == NULL) return NULL;
     bool isStringNotInBounds = (beginIndex > endIndex || endIndex > strlen(source));
-    if (isStringNotInBounds) return NULL;
+    if (isStringNotInBounds) return destination;
     uint32_t subLen = (endIndex - beginIndex);
     memmove(destination->value, source + beginIndex, subLen);
     destination->length = subLen;

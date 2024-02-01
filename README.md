@@ -14,7 +14,7 @@ handle telemetry data such as water, gas, and electricity meter readings autonom
 ## Features
 
 - Easy configuration and setup
-- Modern Web View using [Bootstrap 5](https://getbootstrap.com/docs/5.0/getting-started/introduction/) framework
+- Modern Web View using [Bootstrap 5](https://getbootstrap.com/docs/5.0/getting-started/introduction/)
 - Dynamic web pages with [Jquery](https://jquery.com/) and [CSP](https://github.com/ximtech/CSP) templates
 - Telegram integration. Receive meter reading with bot support
 - Flexible cron job configuration
@@ -30,7 +30,7 @@ handle telemetry data such as water, gas, and electricity meter readings autonom
 - File system control in an admin panel ✅
 - Tensorflow Lite integration and image recognition ⬜
 - Captive portal instead hardcoded IP for web view ⬜
-- Wi-Fi password and other sensitive data asymmetric encryption ⬜
+- Wi-Fi password and other sensitive data asymmetric encryption ✅
 
 ## Table of Contents
 

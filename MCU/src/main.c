@@ -13,11 +13,7 @@
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
 
-#include "psa_crypto_rsa.h"
 #include "esp_sleep.h"
-
-#include "mbedtls/pk.h"
-#include "mbedtls/error.h"
 
 #include "SDCard.h"
 #include "StatusLed.h"
@@ -25,6 +21,7 @@
 #include "EspConfig.h"
 #include "CameraControl.h"
 #include "SoftAPServer.h"
+#include "Encryptor.h"
 
 /*
  * Two resistors divider of 100K and 10K
@@ -62,10 +59,10 @@ static DateTimeFormatter photoFileDateTimeFormatter;
 static int logOverrideFunction(const char *format, va_list argumentList);
 static int getBatteryDividerVoltage();
 static bool adcCalibrationInit(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *outHandle);
-static void adcCalibrationDeinit(adc_cali_handle_t handle);
+static void adcCalibrationDeInit(adc_cali_handle_t handle);
 
 static int calculateBatteryPercentage(int dividerVoltage);
-static bool isAppFullyConfigured();
+static bool initEncryptionModule();
 static void executeCronJob();
 static void cleanupPhotoDirectory();
 static int fileDateCompareFunction (const void *one, const void *two);
@@ -178,19 +175,19 @@ void app_main() {
 
     esp_err_t psRamStatus = initExternalPSRAM();
     if (psRamStatus != ESP_OK) {
-        LOG_ERROR(TAG, "PSRAM init failed");
+        LOG_FATAL(TAG, "PSRAM init failed");
         statusLed(PSRAM_INIT_ERROR, 1, false);
         return;
     }
 
     if (cameraStatus != ESP_OK) {
-        LOG_ERROR(TAG, "Camera init failed");
+        LOG_FATAL(TAG, "Camera init failed");
         statusLed(CAMERA_INIT_ERROR, 1, false);
         return;
     }
 
     if (!testCamera()) {    // Camera init OK --> continue to perform camera framebuffer check
-        LOG_ERROR(TAG, "Camera framebuffer check failed");
+        LOG_FATAL(TAG, "Camera framebuffer check failed");
         statusLed(CAMERA_INIT_ERROR, 2, false);
         return;
     }
@@ -217,6 +214,16 @@ void app_main() {
     vTaskDelay(pdMS_TO_TICKS(xDelay));
 
     batteryPercentage = calculateBatteryPercentage(dividerVoltage);
+
+    bool isRsaKeysLoaded = initEncryptionModule();  // Load and initialize encryption keys
+    if (!isRsaKeysLoaded) {
+        LOG_ERROR(TAG, "RSA key generate/load fail. Deleting PEM key files and clean encrypted data");
+        File *encryptionDir = NEW_FILE(ENCRYPTION_DIR);
+        deleteDirectory(encryptionDir);
+        LOG_INFO(TAG, "Restarting device to reconfigure");
+        esp_restart();
+    }
+
     newFile(&imageDirRoot, CAMERA_IMAGE_DIR);
     MKDIR(imageDirRoot.path);
 
@@ -243,7 +250,8 @@ void app_main() {
         if (isWifiHasConnection()) {
             setupNtpTime(); // init ntp time, we have connection already
             if (!isProjectTimeSet()) {
-                esp_restart();  // time is not configured, retry after restart
+                LOG_ERROR(TAG, "Time is not configured, retry after restart");
+                esp_restart();
             }
 
             loadTimezoneHistoricRules(&timeZone);   // at this point time should be setup, then load DST rules
@@ -251,10 +259,11 @@ void app_main() {
         }
     }
 
-    if (!isAppFullyConfigured() || isWakeupButtonPressed || !isWifiHasConnection()) { // Not configured or button pressed, then enable soft AP server
+    if (!isAppFullyConfigured(&wlanConfig) || isWakeupButtonPressed || !isWifiHasConnection()) { // Not configured or button pressed, then enable soft AP server
         LOG_INFO(TAG, "Starting access point for remote configuration");
         wifiInitSoftAp(&appConfig);
         startWebServerAP();
+        // TODO: Uncomment this with updated board design
 //        statusLed(AP_OR_OTA_ENABLED, 2, true);
         while(true) { // wait until reboot
             vTaskDelay(pdMS_TO_TICKS(1000));
@@ -329,7 +338,7 @@ static int getBatteryDividerVoltage() {
     //Tear Down
     ESP_ERROR_CHECK(adc_oneshot_del_unit(adc2Handle));
     if (isDoCalibration) {
-        adcCalibrationDeinit(adc2CalibrationHandle);
+        adcCalibrationDeInit(adc2CalibrationHandle);
     }
     gpio_reset_pin(BATTERY_GPIO_PIN);
     return voltage;
@@ -383,7 +392,7 @@ static bool adcCalibrationInit(adc_unit_t unit, adc_channel_t channel, adc_atten
     return calibrated;
 }
 
-static void adcCalibrationDeinit(adc_cali_handle_t handle) {
+static void adcCalibrationDeInit(adc_cali_handle_t handle) {
 #if ADC_CALI_SCHEME_CURVE_FITTING_SUPPORTED
     LOG_INFO(TAG, "Deregister [%s] calibration scheme", "Curve Fitting");
     ESP_ERROR_CHECK(adc_cali_delete_scheme_curve_fitting(handle));
@@ -407,13 +416,18 @@ static int calculateBatteryPercentage(int dividerVoltage) {
     }
 }
 
-static bool isAppFullyConfigured() {
-    bool isMeterNameSet = getProperty(&wlanConfig, PROPERTY_METER_NAME_KEY) != NULL;
-    bool isTimeZoneSet = getProperty(&wlanConfig, PROPERTY_APP_SYSTEM_TIMEZONE_KEY) != NULL;
-    bool isCameraCalibrated = getProperty(&wlanConfig, PROPERTY_FLASH_LIGHT_INTENSITY_KEY) != NULL && getProperty(&wlanConfig, PROPERTY_CALIBRATION_FOTO_KEY) != NULL;
-    bool isSchedulerConfigured = getProperty(&wlanConfig, PROPERTY_SYSTEM_CRON_EXPR_KEY) != NULL;
-    bool isSubscribedToBot = getProperty(&wlanConfig, PROPERTY_TELEGRAM_CHAT_ID_KEY) != NULL;
-    return isMeterNameSet && isTimeZoneSet && isCameraCalibrated && isSchedulerConfigured && isSubscribedToBot;
+static bool initEncryptionModule() {
+    File *privateRsaKeyFile = NEW_FILE(PRIVATE_KEY_PEM_FILE);
+    File *publicRsaKeyFile = NEW_FILE(PUBLIC_KEY_PEM_FILE);
+
+    bool isRsaKeyGenerated = true;
+    if (!isFileExists(privateRsaKeyFile) || !isFileExists(publicRsaKeyFile)) {
+        MKDIR(ENCRYPTION_DIR);
+        createFile(privateRsaKeyFile);
+        createFile(publicRsaKeyFile);
+        isRsaKeyGenerated = generateRsaKeyPair(publicRsaKeyFile, privateRsaKeyFile);
+    }
+    return isRsaKeyGenerated ? loadRsaEncryptionKeys(publicRsaKeyFile, privateRsaKeyFile) : false;
 }
 
 static void executeCronJob() {
@@ -488,7 +502,6 @@ static void cleanupPhotoDirectory() {
             remove(fileToRemove.path);    // calibration photo will be in the list bottom, so it will not be deleted
         }
     }
-
     freePsramHeap(fileBuffer);
 }
 

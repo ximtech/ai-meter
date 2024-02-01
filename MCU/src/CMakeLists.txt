@@ -88,6 +88,7 @@ set(SOURCES AppConfig.h
             ${LED_PATH}/StatusLed.c
             ${ESP_INFO_PATH}/EspConfig.c
             ${ESP_INFO_PATH}/PSRAM.c
+            ${ESP_INFO_PATH}/Encryptor.c
             ${NTP_TIME_PATH}/NTPTime.c
             ${SERVER_PATH}/SoftAPServer.c
             ${SERVER_PATH}/ServerUtils.c

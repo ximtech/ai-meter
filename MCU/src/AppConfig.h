@@ -17,9 +17,13 @@
 #define CAMERA_IMAGE_DIR        SD_CARD_ROOT "/photo"
 #define DATABASE_DIR            SD_CARD_ROOT "/db"
 #define EMBEDDED_DATABASE_FILE  DATABASE_DIR "/embedded.db"
+#define ENCRYPTION_DIR          SD_CARD_ROOT "/encryption"
+#define PRIVATE_KEY_PEM_FILE    ENCRYPTION_DIR "/private_encryption_key.pem"
+#define PUBLIC_KEY_PEM_FILE     ENCRYPTION_DIR "/public_encryption_key.pem"
 
 #define HIDE_PASSWORD   // hide password from wlan.properties in log
 
+// TODO: Update GPIOs when updated board design will be available
 #define FLASH_GPIO              GPIO_NUM_4
 #define BLINK_GPIO              GPIO_NUM_0
 #define CONFIG_START_GPIO       GPIO_NUM_0
@@ -58,7 +62,6 @@
 
 // Geo IP service keys
 #define PROPERTY_IP_GEOLOCATION_ENABLED_KEY "ip.geolocation.enabled"
-#define PROPERTY_IP_GEOLOCATION_URL_KEY "ip.geolocation.url"
 #define PROPERTY_IP_GEOLOCATION_TIMEZONE_FORMAT_URL_KEY "ip.geolocation.timezone.format.url"
 #define PROPERTY_IP_GEOLOCATION_API_KEY "ip.geolocation.api.key"
 
